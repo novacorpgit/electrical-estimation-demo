@@ -236,7 +236,18 @@ const BomManagement = () => {
     setCategoryFilter("");
     if (gridApi) {
       gridApi.setQuickFilter("");
-      gridApi.resetColumnFilters();
+      
+      // Clear individual column filters
+      const filterModel = gridApi.getFilterModel();
+      if (filterModel) {
+        Object.keys(filterModel).forEach(key => {
+          const filterInstance = gridApi.getFilterInstance(key);
+          if (filterInstance) {
+            filterInstance.setModel(null);
+          }
+        });
+        gridApi.onFilterChanged();
+      }
     }
   };
 
@@ -284,7 +295,7 @@ const BomManagement = () => {
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="_all">All Categories</SelectItem>
                     {defaultCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
