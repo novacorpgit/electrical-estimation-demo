@@ -80,6 +80,11 @@ declare module 'jointjs' {
     interface Paper {
       remove(): void;
     }
+
+    // Add model property to CellView interface
+    interface CellView {
+      model: Cell;
+    }
   }
 }
 
@@ -153,8 +158,8 @@ const PanelLayout = () => {
     
     // Setup drag-and-drop from BOM table to canvas
     paper.on('cell:pointerup', function(cellView: joint.dia.CellView) {
-      // Access the model from the cellView
-      const cell = cellView.model as unknown as joint.dia.Cell;
+      // Access the model directly from cellView which now has the model property
+      const cell = cellView.model;
       const bomItemId = cell.get('bomItemId');
       
       if (bomItemId) {
@@ -189,10 +194,8 @@ const PanelLayout = () => {
     // Check if item is available
     const available = bomItem.quantity - (bomItem.inUse || 0);
     if (available <= 0) {
-      // Fix the toast structure to match sonner's API
-      toast("This item is out of stock", {
-        variant: "destructive"
-      });
+      // Fix to use sonner toast API correctly - it doesn't take variant directly
+      toast.error("This item is out of stock");
       return;
     }
     
