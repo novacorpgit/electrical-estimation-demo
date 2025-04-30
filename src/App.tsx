@@ -11,6 +11,7 @@ import BomManagement from './pages/BomManagement';
 import PanelLayout from './pages/PanelLayout';
 import UserManagement from './pages/UserManagement';
 import UserProfile from './pages/UserProfile';
+import QuotationPage from './pages/QuotationPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/panel-layout/:subProjectId" element={<PanelLayout />} />
           <Route path="/users" element={<UserManagement />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/quotation/:projectId/:subProjectId" element={<QuotationPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

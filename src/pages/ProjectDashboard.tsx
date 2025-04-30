@@ -154,6 +154,11 @@ export const ProjectDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
 
+  const handleQuoteGeneration = (subProjectId: string) => {
+    // Navigate to the quotation page for this sub-project
+    navigate(`/quotation/${projectId}/${subProjectId}`);
+  };
+
   useEffect(() => {
     if (!projectId) {
       navigate('/');
@@ -213,7 +218,19 @@ export const ProjectDashboard = () => {
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
-              onClick={() => setShowQuoteGenerator(true)}
+              onClick={() => {
+                // If there are sub-projects available, we'll generate a quote for the first one
+                const subProjects = mockSubProjects.filter(sp => sp.projectId === projectId);
+                if (subProjects.length > 0) {
+                  handleQuoteGeneration(subProjects[0].id);
+                } else {
+                  toast({
+                    title: "No sub-projects found",
+                    description: "Please create a sub-project first before generating a quotation.",
+                    variant: "destructive",
+                  });
+                }
+              }}
             >
               <BanknoteIcon className="h-4 w-4" />
               Generate Quotation
@@ -407,13 +424,6 @@ export const ProjectDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
-
-      <QuoteGenerator
-        open={showQuoteGenerator}
-        onOpenChange={setShowQuoteGenerator}
-        projectId={projectId || ""}
-        projectName={project.projectName}
-      />
     </div>
   );
 };
