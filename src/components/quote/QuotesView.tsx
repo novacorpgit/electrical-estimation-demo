@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { QuoteForm } from "./QuoteForm";
+import { BomItem } from "./bom/BomTypes";
 
-// Mock quote data
+// Mock quote data with BOM items
 const mockQuotes = [
   {
     id: "Q001",
@@ -18,7 +19,12 @@ const mockQuotes = [
     status: "Draft",
     createdBy: "David Jones",
     createdDate: "2025-04-15",
-    expiryDate: "2025-05-15"
+    expiryDate: "2025-05-15",
+    bomItems: [
+      { id: "1", description: "100A Main Switch", quantity: 1, unitCost: 450, totalCost: 450, category: "switchgear" },
+      { id: "2", description: "63A MCCB", quantity: 4, unitCost: 250, totalCost: 1000, category: "breakers" },
+      { id: "3", description: "Installation Labor", quantity: 8, unitCost: 120, totalCost: 960, category: "labor" }
+    ] as BomItem[]
   },
   {
     id: "Q002",
@@ -30,7 +36,11 @@ const mockQuotes = [
     status: "Approved",
     createdBy: "David Jones",
     createdDate: "2025-04-16",
-    expiryDate: "2025-05-16"
+    expiryDate: "2025-05-16",
+    bomItems: [
+      { id: "1", description: "Emergency Lighting Controller", quantity: 1, unitCost: 1200, totalCost: 1200, category: "switchgear" },
+      { id: "2", description: "10A MCB", quantity: 6, unitCost: 45, totalCost: 270, category: "breakers" }
+    ] as BomItem[]
   },
   {
     id: "Q003",
@@ -42,7 +52,8 @@ const mockQuotes = [
     status: "Pending Approval",
     createdBy: "David Jones",
     createdDate: "2025-04-17",
-    expiryDate: "2025-05-17"
+    expiryDate: "2025-05-17",
+    bomItems: [] as BomItem[]
   },
   {
     id: "Q004",
@@ -54,7 +65,8 @@ const mockQuotes = [
     status: "Draft",
     createdBy: "David Jones",
     createdDate: "2025-04-18",
-    expiryDate: "2025-05-18"
+    expiryDate: "2025-05-18",
+    bomItems: [] as BomItem[]
   },
   {
     id: "Q005",
@@ -66,14 +78,93 @@ const mockQuotes = [
     status: "Rejected",
     createdBy: "David Jones",
     createdDate: "2025-04-19",
-    expiryDate: "2025-05-19"
+    expiryDate: "2025-05-19",
+    bomItems: [] as BomItem[]
   }
 ];
+
+// Create a separate component for the Quotes table
+const QuotesTable = ({ 
+  quotes, 
+  onViewQuote, 
+  onEditQuote, 
+  onSendQuote
+}: { 
+  quotes: typeof mockQuotes, 
+  onViewQuote: (id: string) => void,
+  onEditQuote: (id: string) => void,
+  onSendQuote: (id: string) => void
+}) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Draft": return "bg-gray-100 text-gray-800";
+      case "Pending Approval": return "bg-yellow-100 text-yellow-800";
+      case "Approved": return "bg-green-100 text-green-800";
+      case "Rejected": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+  
+  return (
+    <div className="rounded-md border">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b bg-muted/50">
+            <th className="h-10 px-4 text-left">Quote #</th>
+            <th className="h-10 px-4 text-left">Sub-Project</th>
+            <th className="h-10 px-4 text-left">Currency</th>
+            <th className="h-10 px-4 text-left">Value</th>
+            <th className="h-10 px-4 text-left">Items</th>
+            <th className="h-10 px-4 text-left">Status</th>
+            <th className="h-10 px-4 text-left">Created Date</th>
+            <th className="h-10 px-4 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {quotes.length === 0 ? (
+            <tr>
+              <td colSpan={8} className="h-24 text-center text-muted-foreground">
+                No quotes found.
+              </td>
+            </tr>
+          ) : (
+            quotes.map((quote) => (
+              <tr key={quote.id} className="border-b hover:bg-muted/50">
+                <td className="p-4 font-medium">{quote.quoteNumber}</td>
+                <td className="p-4">{quote.subProjectName}</td>
+                <td className="p-4">{quote.currency}</td>
+                <td className="p-4">{quote.finalValue.toLocaleString('en-AU', { 
+                  style: 'currency', 
+                  currency: quote.currency 
+                })}</td>
+                <td className="p-4">
+                  <span className="font-medium">{quote.bomItems.length}</span> items
+                </td>
+                <td className="p-4">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quote.status)}`}>
+                    {quote.status}
+                  </span>
+                </td>
+                <td className="p-4">{quote.createdDate}</td>
+                <td className="p-4">
+                  <Button variant="ghost" size="sm" onClick={() => onViewQuote(quote.id)}>View</Button>
+                  <Button variant="ghost" size="sm" onClick={() => onEditQuote(quote.id)}>Edit</Button>
+                  <Button variant="ghost" size="sm" onClick={() => onSendQuote(quote.id)}>Send</Button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export const QuotesView = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateQuote, setShowCreateQuote] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<typeof mockQuotes[0] | null>(null);
   const [selectedSubProject, setSelectedSubProject] = useState({ id: "", name: "" });
   
   // Filter quotes based on search term and active tab
@@ -91,19 +182,30 @@ export const QuotesView = () => {
     return matchesSearch;
   });
   
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Draft": return "bg-gray-100 text-gray-800";
-      case "Pending Approval": return "bg-yellow-100 text-yellow-800";
-      case "Approved": return "bg-green-100 text-green-800";
-      case "Rejected": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-  
   const handleCreateQuote = (subProjectId: string, subProjectName: string) => {
     setSelectedSubProject({ id: subProjectId, name: subProjectName });
     setShowCreateQuote(true);
+  };
+
+  const handleViewQuote = (id: string) => {
+    const quote = mockQuotes.find(q => q.id === id);
+    if (quote) {
+      setSelectedQuote(quote);
+    }
+  };
+
+  const handleEditQuote = (id: string) => {
+    const quote = mockQuotes.find(q => q.id === id);
+    if (quote) {
+      setSelectedSubProject({ id: quote.subProjectId, name: quote.subProjectName });
+      setSelectedQuote(quote);
+      setShowCreateQuote(true);
+    }
+  };
+
+  const handleSendQuote = (id: string) => {
+    // Mock functionality for sending a quote
+    console.log(`Sending quote ${id}`);
   };
 
   return (
@@ -138,55 +240,12 @@ export const QuotesView = () => {
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-4">
-              <div className="rounded-md border">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="h-10 px-4 text-left">Quote #</th>
-                      <th className="h-10 px-4 text-left">Sub-Project</th>
-                      <th className="h-10 px-4 text-left">Currency</th>
-                      <th className="h-10 px-4 text-left">Value</th>
-                      <th className="h-10 px-4 text-left">Status</th>
-                      <th className="h-10 px-4 text-left">Created By</th>
-                      <th className="h-10 px-4 text-left">Created Date</th>
-                      <th className="h-10 px-4 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredQuotes.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                          No quotes found.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredQuotes.map((quote) => (
-                        <tr key={quote.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4 font-medium">{quote.quoteNumber}</td>
-                          <td className="p-4">{quote.subProjectName}</td>
-                          <td className="p-4">{quote.currency}</td>
-                          <td className="p-4">{quote.finalValue.toLocaleString('en-AU', { 
-                            style: 'currency', 
-                            currency: quote.currency 
-                          })}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quote.status)}`}>
-                              {quote.status}
-                            </span>
-                          </td>
-                          <td className="p-4">{quote.createdBy}</td>
-                          <td className="p-4">{quote.createdDate}</td>
-                          <td className="p-4">
-                            <Button variant="ghost" size="sm">View</Button>
-                            <Button variant="ghost" size="sm">Edit</Button>
-                            <Button variant="ghost" size="sm">Send</Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <QuotesTable 
+                quotes={filteredQuotes} 
+                onViewQuote={handleViewQuote}
+                onEditQuote={handleEditQuote}
+                onSendQuote={handleSendQuote}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -194,7 +253,7 @@ export const QuotesView = () => {
 
       {showCreateQuote && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-2xl">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto">
             <CardHeader>
               <CardTitle>Create Quote</CardTitle>
             </CardHeader>
@@ -202,8 +261,14 @@ export const QuotesView = () => {
               <QuoteForm 
                 subProjectId={selectedSubProject.id}
                 subProjectName={selectedSubProject.name}
-                onCancel={() => setShowCreateQuote(false)} 
-                onSuccess={() => setShowCreateQuote(false)}
+                onCancel={() => {
+                  setShowCreateQuote(false);
+                  setSelectedQuote(null);
+                }} 
+                onSuccess={() => {
+                  setShowCreateQuote(false);
+                  setSelectedQuote(null);
+                }}
               />
             </CardContent>
           </Card>

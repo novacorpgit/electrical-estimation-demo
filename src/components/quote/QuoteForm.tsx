@@ -11,7 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { BomItem } from "./bom/BomTypes";
+import { BomList } from "./bom/BomList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type QuoteFormData = {
   quoteNumber: string;
@@ -27,6 +31,7 @@ type QuoteFormData = {
   approvalStatus: string;
   offerExpiryDate: string;
   notes: string;
+  bomItems: BomItem[];
 };
 
 interface QuoteFormProps {
@@ -69,9 +74,33 @@ export const QuoteForm = ({
     approvalStatus: "Draft",
     offerExpiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
     notes: "",
+    bomItems: [],
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "bom">("details");
+
+  const handleBomItemsChange = (bomItems: BomItem[]) => {
+    setFormData(prev => {
+      const newData = { ...prev, bomItems };
+      
+      // Update subtotals based on BOM items
+      const materials = bomItems
+        .filter(item => item.category !== 'labor')
+        .reduce((sum, item) => sum + item.totalCost, 0);
+      
+      const labour = bomItems
+        .filter(item => item.category === 'labor')
+        .reduce((sum, item) => sum + item.totalCost, 0);
+      
+      // Recalculate final value
+      return recalculateTotals({
+        ...newData,
+        subtotalMaterials: materials,
+        subtotalLabour: labour
+      });
+    });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -84,24 +113,26 @@ export const QuoteForm = ({
     
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: parsedValue };
-      
-      // Recalculate final value whenever any input changes
-      const subtotal = updatedData.subtotalMaterials + updatedData.subtotalLabour;
-      let marginAmount = 0;
-      
-      if (updatedData.marginType === "markup") {
-        marginAmount = subtotal * (updatedData.marginPercent / 100);
-      } else {
-        // Margin calculation
-        marginAmount = subtotal / (1 - (updatedData.marginPercent / 100)) - subtotal;
-      }
-      
-      const afterMargin = subtotal + marginAmount + updatedData.additionalCosts;
-      const discount = afterMargin * (updatedData.discountPercent / 100);
-      const finalValue = afterMargin - discount;
-      
-      return { ...updatedData, finalQuotedValue: parseFloat(finalValue.toFixed(2)) };
+      return recalculateTotals(updatedData);
     });
+  };
+
+  const recalculateTotals = (data: QuoteFormData): QuoteFormData => {
+    const subtotal = data.subtotalMaterials + data.subtotalLabour;
+    let marginAmount = 0;
+    
+    if (data.marginType === "markup") {
+      marginAmount = subtotal * (data.marginPercent / 100);
+    } else {
+      // Margin calculation
+      marginAmount = subtotal / (1 - (data.marginPercent / 100)) - subtotal;
+    }
+    
+    const afterMargin = subtotal + marginAmount + data.additionalCosts;
+    const discount = afterMargin * (data.discountPercent / 100);
+    const finalValue = afterMargin - discount;
+    
+    return { ...data, finalQuotedValue: parseFloat(finalValue.toFixed(2)) };
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -110,21 +141,7 @@ export const QuoteForm = ({
       
       // Recalculate if margin type changed
       if (name === "marginType") {
-        const subtotal = updatedData.subtotalMaterials + updatedData.subtotalLabour;
-        let marginAmount = 0;
-        
-        if (value === "markup") {
-          marginAmount = subtotal * (updatedData.marginPercent / 100);
-        } else {
-          // Margin calculation
-          marginAmount = subtotal / (1 - (updatedData.marginPercent / 100)) - subtotal;
-        }
-        
-        const afterMargin = subtotal + marginAmount + updatedData.additionalCosts;
-        const discount = afterMargin * (updatedData.discountPercent / 100);
-        const finalValue = afterMargin - discount;
-        
-        return { ...updatedData, finalQuotedValue: parseFloat(finalValue.toFixed(2)) };
+        return recalculateTotals(updatedData);
       }
       
       return updatedData;
@@ -158,179 +175,189 @@ export const QuoteForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Quote Information</h3>
-        <p className="text-sm text-muted-foreground">Creating quote for {subProjectName}</p>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "details" | "bom")}>
+        <TabsList>
+          <TabsTrigger value="details">Quote Details</TabsTrigger>
+          <TabsTrigger value="bom">Bill of Materials</TabsTrigger>
+        </TabsList>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="quoteNumber">Quote Number</Label>
-            <Input
-              id="quoteNumber"
-              name="quoteNumber"
-              value={formData.quoteNumber}
-              readOnly
-              className="bg-muted/50"
-            />
+        <TabsContent value="details" className="space-y-4 pt-4">
+          <h3 className="text-lg font-medium">Quote Information</h3>
+          <p className="text-sm text-muted-foreground">Creating quote for {subProjectName}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="quoteNumber">Quote Number</Label>
+              <Input
+                id="quoteNumber"
+                name="quoteNumber"
+                value={formData.quoteNumber}
+                readOnly
+                className="bg-muted/50"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select
+                value={formData.currency}
+                onValueChange={(value) => handleSelectChange("currency", value)}
+              >
+                <SelectTrigger id="currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AUD">AUD</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="NZD">NZD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="marginType">Margin Type</Label>
+              <Select
+                value={formData.marginType}
+                onValueChange={(value) => handleSelectChange("marginType", value as "markup" | "margin")}
+              >
+                <SelectTrigger id="marginType">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="markup">Markup %</SelectItem>
+                  <SelectItem value="margin">Margin %</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="marginPercent">
+                {formData.marginType === "markup" ? "Markup %" : "Margin %"}
+              </Label>
+              <Input
+                id="marginPercent"
+                name="marginPercent"
+                type="number"
+                step="0.1"
+                placeholder="0.0"
+                value={formData.marginPercent}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="additionalCosts">Additional Costs</Label>
+              <Input
+                id="additionalCosts"
+                name="additionalCosts"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.additionalCosts}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="discountPercent">Discount %</Label>
+              <Input
+                id="discountPercent"
+                name="discountPercent"
+                type="number"
+                step="0.1"
+                placeholder="0.0"
+                value={formData.discountPercent}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="approvalStatus">Approval Status</Label>
+              <Select
+                value={formData.approvalStatus}
+                onValueChange={(value) => handleSelectChange("approvalStatus", value)}
+              >
+                <SelectTrigger id="approvalStatus">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Pending Approval">Pending Approval</SelectItem>
+                  <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="offerExpiryDate">Offer Expiry Date</Label>
+              <Input
+                id="offerExpiryDate"
+                name="offerExpiryDate"
+                type="date"
+                value={formData.offerExpiryDate}
+                onChange={handleChange}
+              />
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="currency">Currency</Label>
-            <Select
-              value={formData.currency}
-              onValueChange={(value) => handleSelectChange("currency", value)}
-            >
-              <SelectTrigger id="currency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AUD">AUD</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="NZD">NZD</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Materials Subtotal</Label>
+                  <div className="text-lg">
+                    {formData.subtotalMaterials.toLocaleString('en-AU', {
+                      style: 'currency',
+                      currency: formData.currency
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <Label>Labour Subtotal</Label>
+                  <div className="text-lg">
+                    {formData.subtotalLabour.toLocaleString('en-AU', {
+                      style: 'currency',
+                      currency: formData.currency
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <Label htmlFor="finalQuotedValue">Final Quoted Value</Label>
+                <div className="text-2xl font-bold">
+                  {formData.finalQuotedValue.toLocaleString('en-AU', {
+                    style: 'currency',
+                    currency: formData.currency
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           <div className="space-y-2">
-            <Label htmlFor="subtotalMaterials">Materials Subtotal</Label>
-            <Input
-              id="subtotalMaterials"
-              name="subtotalMaterials"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.subtotalMaterials}
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Enter any notes about this quote..."
+              value={formData.notes}
               onChange={handleChange}
+              rows={4}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="subtotalLabour">Labour Subtotal</Label>
-            <Input
-              id="subtotalLabour"
-              name="subtotalLabour"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.subtotalLabour}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="marginType">Margin Type</Label>
-            <Select
-              value={formData.marginType}
-              onValueChange={(value) => handleSelectChange("marginType", value as "markup" | "margin")}
-            >
-              <SelectTrigger id="marginType">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="markup">Markup %</SelectItem>
-                <SelectItem value="margin">Margin %</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="marginPercent">
-              {formData.marginType === "markup" ? "Markup %" : "Margin %"}
-            </Label>
-            <Input
-              id="marginPercent"
-              name="marginPercent"
-              type="number"
-              step="0.1"
-              placeholder="0.0"
-              value={formData.marginPercent}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="additionalCosts">Additional Costs</Label>
-            <Input
-              id="additionalCosts"
-              name="additionalCosts"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.additionalCosts}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="discountPercent">Discount %</Label>
-            <Input
-              id="discountPercent"
-              name="discountPercent"
-              type="number"
-              step="0.1"
-              placeholder="0.0"
-              value={formData.discountPercent}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="finalQuotedValue">Final Quoted Value</Label>
-            <Input
-              id="finalQuotedValue"
-              name="finalQuotedValue"
-              type="number"
-              step="0.01"
-              value={formData.finalQuotedValue}
-              readOnly
-              className="bg-muted/50 font-bold"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="approvalStatus">Approval Status</Label>
-            <Select
-              value={formData.approvalStatus}
-              onValueChange={(value) => handleSelectChange("approvalStatus", value)}
-            >
-              <SelectTrigger id="approvalStatus">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Pending Approval">Pending Approval</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="offerExpiryDate">Offer Expiry Date</Label>
-            <Input
-              id="offerExpiryDate"
-              name="offerExpiryDate"
-              type="date"
-              value={formData.offerExpiryDate}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
+        </TabsContent>
         
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            name="notes"
-            placeholder="Enter any notes about this quote..."
-            value={formData.notes}
-            onChange={handleChange}
-            rows={4}
+        <TabsContent value="bom">
+          <BomList 
+            items={formData.bomItems}
+            onItemsChange={handleBomItemsChange}
           />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
       
       <div className="flex justify-end space-x-2 pt-4">
         <Button variant="outline" onClick={onCancel} type="button">
