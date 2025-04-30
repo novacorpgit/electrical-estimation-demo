@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus, Edit, Trash2, Eye, Clipboard, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { NotesPanel } from "@/components/notes/NotesPanel";
 
 // Mock data for sub-projects
 const mockSubProjects = [
@@ -410,6 +411,24 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add NotesPanel for sub-projects */}
+      {selectedSubProject && (
+        <NotesPanel 
+          entityId={selectedSubProject.id} 
+          entityType="subProject" 
+          entityName={selectedSubProject.name}
+        />
+      )}
+      
+      {/* When no sub-project is selected, show project notes */}
+      {!selectedSubProject && (
+        <NotesPanel 
+          entityId={projectId} 
+          entityType="project"
+          entityName={projectName}
+        />
+      )}
     </div>
   );
 };

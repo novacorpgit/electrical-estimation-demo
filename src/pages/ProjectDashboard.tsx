@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon } from "lucide-react";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
+import { NotesPanel } from "@/components/notes/NotesPanel";
 
 // Mock project data - would be fetched from API in a real app
 const getMockProject = (projectId: string) => {
@@ -424,6 +426,13 @@ export const ProjectDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Add the NotesPanel component */}
+      <NotesPanel 
+        entityId={projectId || ""} 
+        entityType="project" 
+        entityName={project.projectName}
+      />
     </div>
   );
 };
