@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, FileText, Download, Filter } from "lucide-react";
+import { Navigation } from "@/components/Navigation";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -263,128 +263,128 @@ const BomManagement = () => {
   const grandTotal = totalMaterialCost + totalLaborCost;
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Bill of Materials Management</h2>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation pageTitle="Bill of Materials Management" />
+      
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
+                Bill of Materials Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 mb-4 items-end">
+                <div className="space-y-2">
+                  <Label htmlFor="filter">Search</Label>
+                  <Input
+                    id="filter"
+                    placeholder="Filter items..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="w-64"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="categoryFilter">Category</Label>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger id="categoryFilter" className="w-48">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">All Categories</SelectItem>
+                      {defaultCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={applyFilter} variant="outline">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Apply Filter
+                  </Button>
+                  <Button onClick={clearFilter} variant="outline">
+                    Clear Filters
+                  </Button>
+                </div>
+                <div className="flex gap-2 ml-auto">
+                  <Button variant={editMode ? "default" : "outline"} onClick={toggleEditMode}>
+                    {editMode ? "Done Editing" : "Edit Items"}
+                  </Button>
+                  <Button onClick={handleAddRow} className="ml-2">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Item
+                  </Button>
+                  <Button onClick={exportToCsv} variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export CSV
+                  </Button>
+                </div>
+              </div>
 
-      <div className="mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center">
-              <FileText className="mr-2 h-5 w-5" />
-              Bill of Materials Items
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4 mb-4 items-end">
-              <div className="space-y-2">
-                <Label htmlFor="filter">Search</Label>
-                <Input
-                  id="filter"
-                  placeholder="Filter items..."
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-64"
+              <div 
+                className="ag-theme-alpine" 
+                style={{ 
+                  height: '500px', 
+                  width: '100%' 
+                }}
+              >
+                <AgGridReact
+                  ref={gridRef}
+                  rowData={rowData}
+                  columnDefs={columnDefs}
+                  defaultColDef={defaultColDef}
+                  onGridReady={onGridReady}
+                  rowSelection="multiple"
+                  animateRows={true}
+                  onCellValueChanged={onCellValueChanged}
+                  suppressClickEdit={!editMode}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="categoryFilter">Category</Label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger id="categoryFilter" className="w-48">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_all">All Categories</SelectItem>
-                    {defaultCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={applyFilter} variant="outline">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Apply Filter
-                </Button>
-                <Button onClick={clearFilter} variant="outline">
-                  Clear Filters
-                </Button>
-              </div>
-              <div className="flex gap-2 ml-auto">
-                <Button variant={editMode ? "default" : "outline"} onClick={toggleEditMode}>
-                  {editMode ? "Done Editing" : "Edit Items"}
-                </Button>
-                <Button onClick={handleAddRow} className="ml-2">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Item
-                </Button>
-                <Button onClick={exportToCsv} variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export CSV
-                </Button>
-              </div>
-            </div>
 
-            <div 
-              className="ag-theme-alpine" 
-              style={{ 
-                height: '500px', 
-                width: '100%' 
-              }}
-            >
-              <AgGridReact
-                ref={gridRef}
-                rowData={rowData}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                onGridReady={onGridReady}
-                rowSelection="multiple"
-                animateRows={true}
-                onCellValueChanged={onCellValueChanged}
-                suppressClickEdit={!editMode}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium text-sm text-muted-foreground">Materials Total</h3>
-                  <p className="text-2xl font-bold">
-                    {totalMaterialCost.toLocaleString('en-AU', { 
-                      style: 'currency', 
-                      currency: 'AUD' 
-                    })}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium text-sm text-muted-foreground">Labor Total</h3>
-                  <p className="text-2xl font-bold">
-                    {totalLaborCost.toLocaleString('en-AU', { 
-                      style: 'currency', 
-                      currency: 'AUD' 
-                    })}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium text-sm text-muted-foreground">Grand Total</h3>
-                  <p className="text-2xl font-bold">
-                    {grandTotal.toLocaleString('en-AU', { 
-                      style: 'currency', 
-                      currency: 'AUD' 
-                    })}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium text-sm text-muted-foreground">Materials Total</h3>
+                    <p className="text-2xl font-bold">
+                      {totalMaterialCost.toLocaleString('en-AU', { 
+                        style: 'currency', 
+                        currency: 'AUD' 
+                      })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium text-sm text-muted-foreground">Labor Total</h3>
+                    <p className="text-2xl font-bold">
+                      {totalLaborCost.toLocaleString('en-AU', { 
+                        style: 'currency', 
+                        currency: 'AUD' 
+                      })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium text-sm text-muted-foreground">Grand Total</h3>
+                    <p className="text-2xl font-bold">
+                      {grandTotal.toLocaleString('en-AU', { 
+                        style: 'currency', 
+                        currency: 'AUD' 
+                      })}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
