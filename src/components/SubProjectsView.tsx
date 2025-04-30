@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubProjectForm } from "./SubProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -336,28 +336,33 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
 
       {/* Add/Edit Sub-Project Dialog */}
       <Dialog open={showAddSubProject} onOpenChange={setShowAddSubProject}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>
               {isEditMode ? `Edit Sub-Project: ${selectedSubProject?.name}` : "Add New Sub-Project"}
             </DialogTitle>
+            <DialogDescription>
+              Fill in the details below to {isEditMode ? "update" : "create"} a sub-project.
+            </DialogDescription>
           </DialogHeader>
-          <SubProjectForm 
-            projectId={projectId}
-            onCancel={() => setShowAddSubProject(false)}
-            onSuccess={() => {
-              // In a real app, this would refresh the data
-              setShowAddSubProject(false);
-              toast({
-                title: isEditMode ? "Sub-project updated" : "Sub-project added",
-                description: isEditMode 
-                  ? `Sub-project ${selectedSubProject?.name} has been updated successfully.` 
-                  : "New sub-project has been added successfully.",
-              });
-            }}
-            initialData={selectedSubProject}
-            isEditMode={isEditMode}
-          />
+          <div className="px-6 pb-6">
+            <SubProjectForm 
+              projectId={projectId}
+              onCancel={() => setShowAddSubProject(false)}
+              onSuccess={() => {
+                // In a real app, this would refresh the data
+                setShowAddSubProject(false);
+                toast({
+                  title: isEditMode ? "Sub-project updated" : "Sub-project added",
+                  description: isEditMode 
+                    ? `Sub-project ${selectedSubProject?.name} has been updated successfully.` 
+                    : "New sub-project has been added successfully.",
+                });
+              }}
+              initialData={selectedSubProject}
+              isEditMode={isEditMode}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

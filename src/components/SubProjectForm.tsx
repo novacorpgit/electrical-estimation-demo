@@ -67,8 +67,8 @@ export const SubProjectForm = ({
     status: initialData?.status || "Draft",
     notes: initialData?.notes || "",
     customPanelLabels: initialData?.customPanelLabels || [],
-    bomTemplate: initialData?.bomTemplate || "",
-    layoutTemplate: initialData?.layoutTemplate || "",
+    bomTemplate: initialData?.bomTemplate || "none",
+    layoutTemplate: initialData?.layoutTemplate || "none",
     files: [],
   });
 
@@ -176,18 +176,18 @@ export const SubProjectForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto px-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4 w-full justify-start">
           <TabsTrigger value="details">Basic Details</TabsTrigger>
           <TabsTrigger value="technical">Technical Specs</TabsTrigger>
           <TabsTrigger value="advanced">Advanced Options</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-4">
+        <TabsContent value="details" className="space-y-4 mt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Sub-Project Name *</Label>
+              <Label htmlFor="name" className="font-medium">Sub-Project Name *</Label>
               <Input
                 id="name"
                 name="name"
@@ -195,11 +195,12 @@ export const SubProjectForm = ({
                 value={formData.name}
                 onChange={handleChange}
                 required
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity of Panels *</Label>
+              <Label htmlFor="quantity" className="font-medium">Quantity of Panels *</Label>
               <Input
                 id="quantity"
                 name="quantity"
@@ -209,19 +210,20 @@ export const SubProjectForm = ({
                 value={formData.quantity}
                 onChange={handleNumberChange}
                 required
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="panelType">Panel Type *</Label>
+              <Label htmlFor="panelType" className="font-medium">Panel Type *</Label>
               <Select
                 value={formData.panelType}
                 onValueChange={(value) => handleSelectChange("panelType", value)}
               >
-                <SelectTrigger id="panelType">
+                <SelectTrigger id="panelType" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="DB">Distribution Board (DB)</SelectItem>
                   <SelectItem value="MSB">Main Switchboard (MSB)</SelectItem>
                   <SelectItem value="Control">Control Panel</SelectItem>
@@ -232,15 +234,15 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="formType">Form Type *</Label>
+              <Label htmlFor="formType" className="font-medium">Form Type *</Label>
               <Select
                 value={formData.formType}
                 onValueChange={(value) => handleSelectChange("formType", value)}
               >
-                <SelectTrigger id="formType">
+                <SelectTrigger id="formType" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="Form 1">Form 1</SelectItem>
                   <SelectItem value="Form 2">Form 2</SelectItem>
                   <SelectItem value="Form 3">Form 3</SelectItem>
@@ -251,15 +253,15 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="installationType">Installation Type *</Label>
+              <Label htmlFor="installationType" className="font-medium">Installation Type *</Label>
               <Select
                 value={formData.installationType}
                 onValueChange={(value) => handleSelectChange("installationType", value as 'Indoor' | 'Outdoor')}
               >
-                <SelectTrigger id="installationType">
+                <SelectTrigger id="installationType" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="Indoor">Indoor</SelectItem>
                   <SelectItem value="Outdoor">Outdoor</SelectItem>
                 </SelectContent>
@@ -267,15 +269,15 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status *</Label>
+              <Label htmlFor="status" className="font-medium">Status *</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value) => handleSelectChange("status", value)}
               >
-                <SelectTrigger id="status">
+                <SelectTrigger id="status" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="Draft">Draft</SelectItem>
                   <SelectItem value="In Progress">In Progress</SelectItem>
                   <SelectItem value="Completed">Completed</SelectItem>
@@ -284,22 +286,23 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="switchboardName">Switchboard Name</Label>
+              <Label htmlFor="switchboardName" className="font-medium">Switchboard Name</Label>
               <Input
                 id="switchboardName"
                 name="switchboardName"
                 placeholder="e.g., Main DB"
                 value={formData.switchboardName}
                 onChange={handleChange}
+                className="w-full"
               />
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="technical" className="space-y-4">
+        <TabsContent value="technical" className="space-y-4 mt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="boardRating">Board Rating (A) *</Label>
+              <Label htmlFor="boardRating" className="font-medium">Board Rating (A) *</Label>
               <Input
                 id="boardRating"
                 name="boardRating"
@@ -307,19 +310,20 @@ export const SubProjectForm = ({
                 value={formData.boardRating}
                 onChange={handleChange}
                 required
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ipRating">IP Rating *</Label>
+              <Label htmlFor="ipRating" className="font-medium">IP Rating *</Label>
               <Select
                 value={formData.ipRating}
                 onValueChange={(value) => handleSelectChange("ipRating", value)}
               >
-                <SelectTrigger id="ipRating">
+                <SelectTrigger id="ipRating" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="IP20">IP20</SelectItem>
                   <SelectItem value="IP54">IP54</SelectItem>
                   <SelectItem value="IP55">IP55</SelectItem>
@@ -330,7 +334,7 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="shortCircuitRating">Short Circuit Rating (kA) *</Label>
+              <Label htmlFor="shortCircuitRating" className="font-medium">Short Circuit Rating (kA) *</Label>
               <Input
                 id="shortCircuitRating"
                 name="shortCircuitRating"
@@ -338,11 +342,12 @@ export const SubProjectForm = ({
                 value={formData.shortCircuitRating}
                 onChange={handleChange}
                 required
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tiers">Number of Tiers</Label>
+              <Label htmlFor="tiers" className="font-medium">Number of Tiers</Label>
               <Input
                 id="tiers"
                 name="tiers"
@@ -350,27 +355,30 @@ export const SubProjectForm = ({
                 placeholder="Enter number of tiers"
                 value={formData.tiers}
                 onChange={handleChange}
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="poleCapacity">Pole Capacity</Label>
+              <Label htmlFor="poleCapacity" className="font-medium">Pole Capacity</Label>
               <Input
                 id="poleCapacity"
                 name="poleCapacity"
                 placeholder="Enter pole capacity"
                 value={formData.poleCapacity}
                 onChange={handleChange}
+                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Custom Panel Labels</Label>
+              <Label className="font-medium">Custom Panel Labels</Label>
               <div className="flex space-x-2">
                 <Input
                   value={labelInput}
                   onChange={(e) => setLabelInput(e.target.value)}
                   placeholder="Add panel label..."
+                  className="flex-1"
                 />
                 <Button type="button" size="icon" onClick={handleAddLabel}>
                   <Plus className="h-4 w-4" />
@@ -396,18 +404,18 @@ export const SubProjectForm = ({
           </div>
         </TabsContent>
 
-        <TabsContent value="advanced" className="space-y-4">
+        <TabsContent value="advanced" className="space-y-4 mt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="bomTemplate">BOM Template</Label>
+              <Label htmlFor="bomTemplate" className="font-medium">BOM Template</Label>
               <Select
                 value={formData.bomTemplate}
                 onValueChange={(value) => handleSelectChange("bomTemplate", value)}
               >
-                <SelectTrigger id="bomTemplate">
+                <SelectTrigger id="bomTemplate" className="w-full">
                   <SelectValue placeholder="Select a BOM template" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="none">None</SelectItem>
                   {bomTemplates.map(template => (
                     <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
@@ -417,15 +425,15 @@ export const SubProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="layoutTemplate">Layout Template</Label>
+              <Label htmlFor="layoutTemplate" className="font-medium">Layout Template</Label>
               <Select
                 value={formData.layoutTemplate}
                 onValueChange={(value) => handleSelectChange("layoutTemplate", value)}
               >
-                <SelectTrigger id="layoutTemplate">
+                <SelectTrigger id="layoutTemplate" className="w-full">
                   <SelectValue placeholder="Select a layout template" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="none">None</SelectItem>
                   {layoutTemplates.map(template => (
                     <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
@@ -435,19 +443,19 @@ export const SubProjectForm = ({
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes" className="font-medium">Notes</Label>
               <Textarea
                 id="notes"
                 name="notes"
                 placeholder="Enter any notes or instructions"
                 value={formData.notes}
                 onChange={handleChange}
-                className="min-h-[100px]"
+                className="min-h-[100px] w-full"
               />
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label>Upload Files (SLDs, Drawings)</Label>
+              <Label className="font-medium">Upload Files (SLDs, Drawings)</Label>
               <div className="flex items-center space-x-2">
                 <div className="flex-1">
                   <Input
@@ -455,13 +463,13 @@ export const SubProjectForm = ({
                     type="file"
                     multiple
                     onChange={handleFileChange}
-                    className="cursor-pointer"
+                    className="cursor-pointer w-full"
                   />
                 </div>
               </div>
               {formData.files.length > 0 && (
                 <div className="mt-4">
-                  <Label>Uploaded Files:</Label>
+                  <Label className="font-medium">Uploaded Files:</Label>
                   <div className="mt-2 space-y-2">
                     {formData.files.map((file, index) => (
                       <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
