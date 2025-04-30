@@ -1,14 +1,14 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { QuoteForm } from "./QuoteForm";
-import { BomItem } from "./bom/BomTypes";
+import { BomItem, Quote } from "./bom/BomTypes";
+import { QuoteDetailView } from "./QuoteDetailView";
 
 // Mock quote data with BOM items
-const mockQuotes = [
+const mockQuotes: Quote[] = [
   {
     id: "Q001",
     quoteNumber: "B25-0431M-DJ",
@@ -24,7 +24,7 @@ const mockQuotes = [
       { id: "1", description: "100A Main Switch", quantity: 1, unitCost: 450, totalCost: 450, category: "switchgear" },
       { id: "2", description: "63A MCCB", quantity: 4, unitCost: 250, totalCost: 1000, category: "breakers" },
       { id: "3", description: "Installation Labor", quantity: 8, unitCost: 120, totalCost: 960, category: "labor" }
-    ] as BomItem[]
+    ]
   },
   {
     id: "Q002",
@@ -40,7 +40,7 @@ const mockQuotes = [
     bomItems: [
       { id: "1", description: "Emergency Lighting Controller", quantity: 1, unitCost: 1200, totalCost: 1200, category: "switchgear" },
       { id: "2", description: "10A MCB", quantity: 6, unitCost: 45, totalCost: 270, category: "breakers" }
-    ] as BomItem[]
+    ]
   },
   {
     id: "Q003",
@@ -90,7 +90,7 @@ const QuotesTable = ({
   onEditQuote, 
   onSendQuote
 }: { 
-  quotes: typeof mockQuotes, 
+  quotes: Quote[], 
   onViewQuote: (id: string) => void,
   onEditQuote: (id: string) => void,
   onSendQuote: (id: string) => void
@@ -164,7 +164,8 @@ export const QuotesView = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateQuote, setShowCreateQuote] = useState(false);
-  const [selectedQuote, setSelectedQuote] = useState<typeof mockQuotes[0] | null>(null);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [showQuoteDetail, setShowQuoteDetail] = useState(false);
   const [selectedSubProject, setSelectedSubProject] = useState({ id: "", name: "" });
   
   // Filter quotes based on search term and active tab
@@ -185,12 +186,15 @@ export const QuotesView = () => {
   const handleCreateQuote = (subProjectId: string, subProjectName: string) => {
     setSelectedSubProject({ id: subProjectId, name: subProjectName });
     setShowCreateQuote(true);
+    setShowQuoteDetail(false);
   };
 
   const handleViewQuote = (id: string) => {
     const quote = mockQuotes.find(q => q.id === id);
     if (quote) {
       setSelectedQuote(quote);
+      setShowQuoteDetail(true);
+      setShowCreateQuote(false);
     }
   };
 
@@ -200,6 +204,7 @@ export const QuotesView = () => {
       setSelectedSubProject({ id: quote.subProjectId, name: quote.subProjectName });
       setSelectedQuote(quote);
       setShowCreateQuote(true);
+      setShowQuoteDetail(false);
     }
   };
 
@@ -210,46 +215,56 @@ export const QuotesView = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Quotes</h2>
-        <Button onClick={() => handleCreateQuote("SP006", "New Panel")}>Create Quote</Button>
-      </div>
-
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="w-1/3">
-              <Input
-                placeholder="Search quotes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="space-x-2">
-              <Button variant="outline">Export</Button>
-            </div>
+      {showQuoteDetail && selectedQuote ? (
+        <QuoteDetailView 
+          quote={selectedQuote}
+          onEdit={() => handleEditQuote(selectedQuote.id)}
+          onBack={() => setShowQuoteDetail(false)}
+        />
+      ) : (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Quotes</h2>
+            <Button onClick={() => handleCreateQuote("SP006", "New Panel")}>Create Quote</Button>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="all">All Quotes</TabsTrigger>
-              <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={activeTab} className="mt-4">
-              <QuotesTable 
-                quotes={filteredQuotes} 
-                onViewQuote={handleViewQuote}
-                onEditQuote={handleEditQuote}
-                onSendQuote={handleSendQuote}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <div className="w-1/3">
+                  <Input
+                    placeholder="Search quotes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="space-x-2">
+                  <Button variant="outline">Export</Button>
+                </div>
+              </div>
+
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList>
+                  <TabsTrigger value="all">All Quotes</TabsTrigger>
+                  <TabsTrigger value="draft">Draft</TabsTrigger>
+                  <TabsTrigger value="pending">Pending</TabsTrigger>
+                  <TabsTrigger value="approved">Approved</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value={activeTab} className="mt-4">
+                  <QuotesTable 
+                    quotes={filteredQuotes} 
+                    onViewQuote={handleViewQuote}
+                    onEditQuote={handleEditQuote}
+                    onSendQuote={handleSendQuote}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {showCreateQuote && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

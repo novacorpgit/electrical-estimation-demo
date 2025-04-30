@@ -16,6 +16,27 @@ export interface BomCategory {
   description?: string;
 }
 
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  subProjectId: string;
+  subProjectName: string;
+  currency: string;
+  finalValue: number;
+  status: string;
+  createdBy: string;
+  createdDate: string;
+  expiryDate: string;
+  bomItems: BomItem[];
+  notes?: string;
+  subtotalMaterials?: number;
+  subtotalLabour?: number;
+  marginPercent?: number;
+  marginType?: "markup" | "margin";
+  additionalCosts?: number;
+  discountPercent?: number;
+}
+
 // Default categories for electrical components
 export const defaultCategories: BomCategory[] = [
   { id: 'breakers', name: 'Circuit Breakers' },
