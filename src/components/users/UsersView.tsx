@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 // Mock data - would be replaced with actual API calls
 const mockUsers: ExtendedUser[] = [
@@ -74,6 +75,7 @@ export const UsersView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [users, setUsers] = useState<ExtendedUser[]>(mockUsers);
+  const navigate = useNavigate();
 
   const filteredUsers = users.filter(
     (user) =>
@@ -85,6 +87,10 @@ export const UsersView: React.FC = () => {
   const handleAddUser = (newUser: ExtendedUser) => {
     setUsers([...users, newUser]);
     setIsAddUserOpen(false);
+  };
+  
+  const handleViewProfile = (userId: string) => {
+    navigate(`/users/${userId}`);
   };
 
   return (
@@ -148,7 +154,11 @@ export const UsersView: React.FC = () => {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleViewProfile(user.id)}
+                >
                   <UserCheck className="h-4 w-4 mr-1" /> Profile
                 </Button>
               </TableCell>
