@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CreateClientForm } from "./CreateClientForm";
+import { ClientsTable, Client } from "./client/ClientsTable";
 
 // Mocked client data
-const mockClients = [
+const mockClients: Client[] = [
   {
     id: "C001",
     companyName: "ABC Construction",
@@ -99,15 +99,6 @@ export const ClientsView = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active": return "bg-green-100 text-green-800";
-      case "Inactive": return "bg-gray-100 text-gray-800";
-      case "Suspended": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -141,68 +132,12 @@ export const ClientsView = () => {
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-4">
-              <div className="rounded-md border">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="h-10 px-4 text-left">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} 
-                            onCheckedChange={handleSelectAll}
-                          />
-                          <span>ID</span>
-                        </div>
-                      </th>
-                      <th className="h-10 px-4 text-left">Company Name</th>
-                      <th className="h-10 px-4 text-left">Client Type</th>
-                      <th className="h-10 px-4 text-left">Address</th>
-                      <th className="h-10 px-4 text-left">Sales Rep</th>
-                      <th className="h-10 px-4 text-left">Last Activity</th>
-                      <th className="h-10 px-4 text-left">Status</th>
-                      <th className="h-10 px-4 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredClients.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                          No clients found.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredClients.map((client) => (
-                        <tr key={client.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                checked={selectedClients.includes(client.id)}
-                                onCheckedChange={() => handleSelectClient(client.id)}
-                              />
-                              <span>{client.id}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 font-medium">{client.companyName}</td>
-                          <td className="p-4">{client.clientType}</td>
-                          <td className="p-4">{client.address}</td>
-                          <td className="p-4">{client.salesRep}</td>
-                          <td className="p-4">{client.lastActivityDate}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(client.status)}`}>
-                              {client.status}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <Button variant="ghost" size="sm">View</Button>
-                            <Button variant="ghost" size="sm">Edit</Button>
-                            <Button variant="ghost" size="sm">Projects</Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <ClientsTable 
+                clients={filteredClients}
+                selectedClients={selectedClients}
+                onSelectClient={handleSelectClient}
+                onSelectAll={handleSelectAll}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
