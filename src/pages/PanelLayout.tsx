@@ -70,6 +70,19 @@ const mockBomItems: BomItem[] = [
   }
 ];
 
+// Extend JointJS types for our use case
+declare module 'jointjs' {
+  namespace dia {
+    interface Cell {
+      get(attribute: string): any;
+    }
+    
+    interface Paper {
+      remove(): void;
+    }
+  }
+}
+
 const PanelLayout = () => {
   const { subProjectId } = useParams<{ subProjectId: string }>();
   const location = useLocation();
@@ -140,8 +153,8 @@ const PanelLayout = () => {
     
     // Setup drag-and-drop from BOM table to canvas
     paper.on('cell:pointerup', function(cellView: joint.dia.CellView) {
-      // Fix: Use the dia.Cell's attributes to get the bomItemId
-      const cell = cellView.model as joint.dia.Cell;
+      // Access the model from the cellView
+      const cell = cellView.model as unknown as joint.dia.Cell;
       const bomItemId = cell.get('bomItemId');
       
       if (bomItemId) {
@@ -152,8 +165,8 @@ const PanelLayout = () => {
     return () => {
       // Cleanup
       if (paperInstanceRef.current) {
-        // Fix: Use proper dispose method
-        paperInstanceRef.current.remove();
+        // Use type assertion to access the remove method
+        (paperInstanceRef.current as unknown as { remove: () => void }).remove();
       }
     };
   }, [subProjectId]);
@@ -164,9 +177,9 @@ const PanelLayout = () => {
     
     const serializedGraph = graphRef.current.toJSON();
     localStorage.setItem(`layout-${subProjectId}`, JSON.stringify(serializedGraph.cells));
-    toast({
-      description: "Your panel layout has been saved"
-    });
+    
+    // Fix the toast structure to match sonner's API
+    toast("Your panel layout has been saved");
   };
   
   // Create a component element on the canvas
@@ -176,8 +189,8 @@ const PanelLayout = () => {
     // Check if item is available
     const available = bomItem.quantity - (bomItem.inUse || 0);
     if (available <= 0) {
-      toast({
-        description: "This item is out of stock",
+      // Fix the toast structure to match sonner's API
+      toast("This item is out of stock", {
         variant: "destructive"
       });
       return;
