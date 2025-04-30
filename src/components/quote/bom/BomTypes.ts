@@ -1,4 +1,3 @@
-
 export interface BomItem {
   id: string;
   description: string;
@@ -8,6 +7,7 @@ export interface BomItem {
   category: string;
   partNumber?: string;
   supplier?: string;
+  inUse?: number; // Add this property to track components used in layout
 }
 
 export interface BomCategory {

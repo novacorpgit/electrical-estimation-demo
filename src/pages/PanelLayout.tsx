@@ -18,7 +18,7 @@ import {
 import * as joint from 'jointjs';
 import { BomList } from "@/components/quote/bom/BomList";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2 } from 'lucide-react';
 
 // Mock BOM items for demonstration
@@ -139,8 +139,9 @@ const PanelLayout = () => {
     }
     
     // Setup drag-and-drop from BOM table to canvas
-    paper.on('cell:pointerup', function(cellView) {
-      const cell = cellView.model;
+    paper.on('cell:pointerup', function(cellView: joint.dia.CellView) {
+      // Fix: Use the dia.Cell's attributes to get the bomItemId
+      const cell = cellView.model as joint.dia.Cell;
       const bomItemId = cell.get('bomItemId');
       
       if (bomItemId) {
@@ -151,6 +152,7 @@ const PanelLayout = () => {
     return () => {
       // Cleanup
       if (paperInstanceRef.current) {
+        // Fix: Use proper dispose method
         paperInstanceRef.current.remove();
       }
     };
@@ -163,7 +165,6 @@ const PanelLayout = () => {
     const serializedGraph = graphRef.current.toJSON();
     localStorage.setItem(`layout-${subProjectId}`, JSON.stringify(serializedGraph.cells));
     toast({
-      title: "Layout saved",
       description: "Your panel layout has been saved"
     });
   };
@@ -176,7 +177,6 @@ const PanelLayout = () => {
     const available = bomItem.quantity - (bomItem.inUse || 0);
     if (available <= 0) {
       toast({
-        title: "Cannot add item",
         description: "This item is out of stock",
         variant: "destructive"
       });
