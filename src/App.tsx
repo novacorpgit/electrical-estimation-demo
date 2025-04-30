@@ -10,6 +10,7 @@ import { QuotesView } from "@/components/quote/QuotesView";
 import BomManagement from "./pages/BomManagement";
 import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
+import ProjectDashboard from "./pages/ProjectDashboard";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/bom" element={<BomManagement />} />
           <Route path="/users" element={<UserManagement />} />
           <Route path="/users/:userId" element={<UserProfile />} />
+          <Route path="/project/:projectId" element={<ProjectDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

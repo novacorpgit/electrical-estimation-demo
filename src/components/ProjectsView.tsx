@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +11,7 @@ import { Search, Plus, Calendar, Clock, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateClientForm } from "./CreateClientForm";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
-import { format, parseISO } from "date-fns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { format } from "date-fns";
 
 // Mocked project data
 const mockProjects = [
@@ -81,6 +77,7 @@ const mockClients = [
 ];
 
 export const ProjectsView = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -232,6 +229,10 @@ export const ProjectsView = () => {
       setSelectedEstimatorDate(null);
       setSelectedProjectForEstimator(null);
     }
+  };
+
+  const handleViewProject = (projectId: string) => {
+    navigate(`/project/${projectId}`);
   };
 
   return (
@@ -404,8 +405,12 @@ export const ProjectsView = () => {
                       </tr>
                     ) : (
                       filteredProjects.map((project) => (
-                        <tr key={project.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">
+                        <tr 
+                          key={project.id} 
+                          className="border-b hover:bg-muted/50 cursor-pointer"
+                          onClick={() => handleViewProject(project.id)}
+                        >
+                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
                                 checked={selectedProjects.includes(project.id)}
@@ -416,7 +421,7 @@ export const ProjectsView = () => {
                           </td>
                           <td className="p-4 font-medium">{project.projectName}</td>
                           <td className="p-4">{project.clientName}</td>
-                          <td className="p-4">
+                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
                             {project.estimatorName ? (
                               <div className="flex items-center space-x-2">
                                 <User className="h-4 w-4 text-gray-500" />
@@ -427,7 +432,10 @@ export const ProjectsView = () => {
                                 variant="outline" 
                                 size="sm" 
                                 className="flex items-center space-x-1 text-blue-600"
-                                onClick={() => handleAssignEstimator(project)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAssignEstimator(project);
+                                }}
                               >
                                 <User className="h-4 w-4" />
                                 <span>Assign</span>
@@ -446,9 +454,27 @@ export const ProjectsView = () => {
                             </span>
                           </td>
                           <td className="p-4">{project.startDate}</td>
-                          <td className="p-4">
-                            <Button variant="ghost" size="sm">View</Button>
-                            <Button variant="ghost" size="sm">Edit</Button>
+                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewProject(project.id);
+                              }}
+                            >
+                              View
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditProject(project);
+                              }}
+                            >
+                              Edit
+                            </Button>
                           </td>
                         </tr>
                       ))
