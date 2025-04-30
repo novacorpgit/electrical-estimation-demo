@@ -1,108 +1,70 @@
 
 import React, { useState } from "react";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { ExtendedUser } from "@/types/panelboard-types";
 import { v4 as uuidv4 } from "uuid";
 
-const userFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  roleId: z.string().min(1, "Role is required"),
-  department: z.string().optional(),
-  workHoursPerWeek: z.coerce.number().min(1).max(80),
-  contactNumber: z.string().optional(),
-  managerId: z.string().optional(),
-});
-
-type UserFormValues = z.infer<typeof userFormSchema>;
-
-interface UserFormProps {
+type UserFormProps = {
   onSubmit: (user: ExtendedUser) => void;
   onCancel: () => void;
   initialData?: Partial<ExtendedUser>;
-}
+};
 
-// Mock data - would be replaced with actual API calls
-const roles = [
-  { id: "1", name: "Admin" },
-  { id: "2", name: "Estimator" },
-  { id: "3", name: "Sales Rep" },
-  { id: "4", name: "Project Manager" },
-  { id: "5", name: "Viewer" },
-];
+// Define valid roles as a type to ensure type safety
+type ValidRole = "Super Admin" | "Admin" | "Estimator" | "Sales Rep" | "Project Manager" | "Viewer";
 
-const departments = [
-  "Engineering",
-  "Sales",
-  "Production",
-  "Finance",
-  "Human Resources",
-  "Management",
-];
+export const UserForm: React.FC<UserFormProps> = ({ onSubmit, onCancel, initialData }) => {
+  const [name, setName] = useState(initialData?.name || "");
+  const [email, setEmail] = useState(initialData?.email || "");
+  const [role, setRole] = useState<ValidRole>((initialData?.roleName as ValidRole) || "Admin");
+  const [department, setDepartment] = useState(initialData?.department || "");
+  const [workHours, setWorkHours] = useState(initialData?.workHoursPerWeek?.toString() || "40");
+  const [joinDate, setJoinDate] = useState<Date | undefined>(
+    initialData?.joinDate ? new Date(initialData.joinDate) : new Date()
+  );
 
-const managers = [
-  { id: "1", name: "John Doe" },
-  { id: "3", name: "Michael Wilson" },
-];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-export const UserForm: React.FC<UserFormProps> = ({
-  onSubmit,
-  onCancel,
-  initialData = {},
-}) => {
-  const generateUniqueCode = (roleId: string) => {
-    const role = roles.find((r) => r.id === roleId);
-    const prefix = role ? role.name.substring(0, 3).toUpperCase() : "USR";
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}${randomNum}`;
-  };
-
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      name: initialData.name || "",
-      email: initialData.email || "",
-      roleId: initialData.roleId || "",
-      department: initialData.department || "",
-      workHoursPerWeek: initialData.workHoursPerWeek || 40,
-      contactNumber: initialData.contactNumber || "",
-      managerId: initialData.managerId || "",
-    },
-  });
-
-  const handleSubmit = (values: UserFormValues) => {
-    const selectedRole = roles.find(r => r.id === values.roleId);
+    // Generate initials from name
+    const nameParts = name.split(" ");
+    const initials = nameParts.length > 1 
+      ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
+      : name.substring(0, 2);
     
-    const newUser: ExtendedUser = {
-      ...values,
-      id: initialData.id || uuidv4(),
-      uniqueCode: initialData.uniqueCode || generateUniqueCode(values.roleId),
-      roleName: selectedRole?.name,
-      status: "Active",
-      initials: values.name.split(" ").map((n) => n[0]).join(""),
-      role: selectedRole?.name || "User",
-      joinDate: initialData.joinDate || new Date().toISOString().split("T")[0],
-      holidays: initialData.holidays || [],
-      leaveBalance: initialData.leaveBalance || {
+    // Generate unique code based on role and random number
+    const rolePrefix = role === "Admin" ? "ADM" : 
+                       role === "Estimator" ? "EST" :
+                       role === "Sales Rep" ? "SLS" :
+                       role === "Project Manager" ? "PM" :
+                       role === "Super Admin" ? "SPA" : "USR";
+    
+    const uniqueCode = `${rolePrefix}${Math.floor(100 + Math.random() * 900)}`;
+    
+    const user: ExtendedUser = {
+      id: initialData?.id || uuidv4(),
+      name,
+      email,
+      role: role,  // This is the same as roleName for consistency
+      roleName: role,
+      roleId: initialData?.roleId || "1",
+      status: initialData?.status || "Active",
+      initials: initialData?.initials || initials.toUpperCase(),
+      uniqueCode: initialData?.uniqueCode || uniqueCode,
+      workHoursPerWeek: parseInt(workHours),
+      department,
+      managerId: initialData?.managerId || "",
+      joinDate: joinDate ? joinDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      holidays: initialData?.holidays || [],
+      leaveBalance: initialData?.leaveBalance || {
         annual: 20,
         sick: 10,
         personal: 3,
@@ -110,164 +72,141 @@ export const UserForm: React.FC<UserFormProps> = ({
         paternity: 0,
         carried: 0,
       },
+      profilePicture: initialData?.profilePicture || "",
     };
-
-    onSubmit(newUser);
+    
+    onSubmit(user);
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="john.doe@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="roleId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Role</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="John Doe"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="john@example.com"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select 
+              value={role} 
+              onValueChange={(value: ValidRole) => setRole(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Super Admin">Super Admin</SelectItem>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Estimator">Estimator</SelectItem>
+                <SelectItem value="Sales Rep">Sales Rep</SelectItem>
+                <SelectItem value="Project Manager">Project Manager</SelectItem>
+                <SelectItem value="Viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Input
+              id="department"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              placeholder="Engineering"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="workHours">Work Hours per Week</Label>
+            <Input
+              id="workHours"
+              type="number"
+              value={workHours}
+              onChange={(e) => setWorkHours(e.target.value)}
+              min="0"
+              max="168"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Join Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Department</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept} value={dept}>
-                        {dept}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="workHoursPerWeek"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Work Hours Per Week</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" max="80" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="contactNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contact Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="+1 (555) 123-4567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="managerId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Manager</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select manager" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
-                    {managers.map((manager) => (
-                      <SelectItem key={manager.id} value={manager.id}>
-                        {manager.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {joinDate ? format(joinDate, "PPP") : "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={joinDate}
+                  onSelect={setJoinDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Leave Balance</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="annualLeave">Annual Leave (days)</Label>
+                  <Input
+                    id="annualLeave"
+                    type="number"
+                    defaultValue="20"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sickLeave">Sick Leave (days)</Label>
+                  <Input
+                    id="sickLeave"
+                    type="number"
+                    defaultValue="10"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="submit">Save User</Button>
         </div>
-      </form>
-    </Form>
+      </div>
+    </form>
   );
 };

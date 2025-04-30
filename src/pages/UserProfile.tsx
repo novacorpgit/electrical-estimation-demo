@@ -172,32 +172,32 @@ const UserProfile: React.FC = () => {
           </Card>
           
           <Card className="md:col-span-2">
-            <CardHeader>
-              <Tabs defaultValue="leave" className="w-full">
+            <Tabs defaultValue="leave" className="w-full">
+              <CardHeader>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="leave">Leave & Balance</TabsTrigger>
                   <TabsTrigger value="work">Work Hours</TabsTrigger>
                   <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
-              </Tabs>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="leave" className="mt-0">
-                <UserLeaveView user={user} />
-              </TabsContent>
-              <TabsContent value="work" className="mt-0">
-                <div className="p-4 bg-gray-50 border rounded-lg">
-                  <h3 className="text-lg font-medium mb-4">Work Hours Log - Coming Soon</h3>
-                  <p>This section will display the user's logged work hours and projects.</p>
-                </div>
-              </TabsContent>
-              <TabsContent value="documents" className="mt-0">
-                <div className="p-4 bg-gray-50 border rounded-lg">
-                  <h3 className="text-lg font-medium mb-4">User Documents - Coming Soon</h3>
-                  <p>This section will allow management of user-related documents.</p>
-                </div>
-              </TabsContent>
-            </CardContent>
+              </CardHeader>
+              <CardContent>
+                <TabsContent value="leave" className="mt-0">
+                  <UserLeaveView user={user} />
+                </TabsContent>
+                <TabsContent value="work" className="mt-0">
+                  <div className="p-4 bg-gray-50 border rounded-lg">
+                    <h3 className="text-lg font-medium mb-4">Work Hours Log - Coming Soon</h3>
+                    <p>This section will display the user's logged work hours and projects.</p>
+                  </div>
+                </TabsContent>
+                <TabsContent value="documents" className="mt-0">
+                  <div className="p-4 bg-gray-50 border rounded-lg">
+                    <h3 className="text-lg font-medium mb-4">User Documents - Coming Soon</h3>
+                    <p>This section will allow management of user-related documents.</p>
+                  </div>
+                </TabsContent>
+              </CardContent>
+            </Tabs>
           </Card>
         </div>
       </main>
