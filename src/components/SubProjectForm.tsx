@@ -408,7 +408,7 @@ export const SubProjectForm = ({
                   <SelectValue placeholder="Select a BOM template" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {bomTemplates.map(template => (
                     <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
                   ))}
@@ -426,7 +426,7 @@ export const SubProjectForm = ({
                   <SelectValue placeholder="Select a layout template" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {layoutTemplates.map(template => (
                     <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
                   ))}
