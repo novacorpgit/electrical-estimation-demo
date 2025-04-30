@@ -67,6 +67,7 @@ export const ProjectsView = () => {
   const [quickFilterClientName, setQuickFilterClientName] = useState("");
   const [filteredQuickResults, setFilteredQuickResults] = useState<any[]>([]);
   const [showQuickResults, setShowQuickResults] = useState(false);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<any>(null);
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
@@ -140,6 +141,12 @@ export const ProjectsView = () => {
   };
 
   const openCreateProjectWithValues = () => {
+    setSelectedProjectForEdit(null);
+    setShowCreateProject(true);
+  };
+
+  const openEditProject = (project: any) => {
+    setSelectedProjectForEdit(project);
     setShowCreateProject(true);
   };
 
@@ -188,7 +195,11 @@ export const ProjectsView = () => {
               <h3 className="font-medium mb-2">Similar Projects Found:</h3>
               <ul className="space-y-2">
                 {filteredQuickResults.slice(0, 3).map(project => (
-                  <li key={project.id} className="flex justify-between items-center border-b pb-2">
+                  <li 
+                    key={project.id} 
+                    className="flex justify-between items-center border-b pb-2 hover:bg-amber-100 cursor-pointer p-2 rounded-md transition-colors"
+                    onClick={() => openEditProject(project)}
+                  >
                     <div>
                       <span className="font-medium">{project.projectName}</span> 
                       <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
@@ -317,13 +328,21 @@ export const ProjectsView = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Create New Project</CardTitle>
+              <CardTitle>{selectedProjectForEdit ? `Edit Project: ${selectedProjectForEdit.projectName}` : 'Create New Project'}</CardTitle>
             </CardHeader>
             <CardContent>
               <CreateProjectForm 
-                onCancel={() => setShowCreateProject(false)} 
-                onSuccess={() => {}}
-                initialData={{
+                onCancel={() => {
+                  setShowCreateProject(false);
+                  setSelectedProjectForEdit(null);
+                }} 
+                onSuccess={() => {
+                  setSelectedProjectForEdit(null);
+                }}
+                initialData={selectedProjectForEdit ? {
+                  projectName: selectedProjectForEdit.projectName,
+                  clientName: selectedProjectForEdit.clientName
+                } : {
                   projectName: quickFilterProjectName,
                   clientName: quickFilterClientName
                 }}
