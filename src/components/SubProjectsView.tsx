@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Edit, Trash2, Eye, Clipboard } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Eye, Clipboard, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for sub-projects
@@ -135,9 +135,12 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
   };
 
   const handleView2DLayout = (subProject: any) => {
-    toast({
-      title: "2D View",
-      description: `Opening 2D layout for ${subProject.name}. This feature will be implemented in a future update.`,
+    navigate(`/panel-layout/${subProject.id}`, { 
+      state: { 
+        subProject,
+        projectId,
+        projectName
+      }
     });
   };
 
@@ -328,9 +331,9 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                                 size="icon"
                                 onClick={() => handleView2DLayout(subProject)}
                                 className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                title="2D View"
+                                title="2D Layout"
                               >
-                                <Eye className="h-4 w-4" />
+                                <LayoutGrid className="h-4 w-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 

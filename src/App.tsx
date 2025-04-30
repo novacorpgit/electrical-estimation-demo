@@ -1,39 +1,34 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import { QuotesView } from "@/components/quote/QuotesView";
-import BomManagement from "./pages/BomManagement";
-import UserManagement from "./pages/UserManagement";
-import UserProfile from "./pages/UserProfile";
-import ProjectDashboard from "./pages/ProjectDashboard";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/sonner";
 
-const queryClient = new QueryClient();
+// Import pages
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import ProjectDashboard from './pages/ProjectDashboard';
+import BomManagement from './pages/BomManagement';
+import PanelLayout from './pages/PanelLayout';
+import UserManagement from './pages/UserManagement';
+import UserProfile from './pages/UserProfile';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <Router>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/quotes" element={<QuotesView />} />
-          <Route path="/bom" element={<BomManagement />} />
-          <Route path="/bom/:subProjectId" element={<BomManagement />} />
-          <Route path="/users" element={<UserManagement />} />
-          <Route path="/users/:userId" element={<UserProfile />} />
           <Route path="/project/:projectId" element={<ProjectDashboard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/bom/:subProjectId" element={<BomManagement />} />
+          <Route path="/panel-layout/:subProjectId" element={<PanelLayout />} />
+          <Route path="/users" element={<UserManagement />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+      <Toaster />
+    </ThemeProvider>
+  );
+}
 
 export default App;
