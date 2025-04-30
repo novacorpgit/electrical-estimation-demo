@@ -142,36 +142,34 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-2 mb-4">
-        <CalendarDays className="h-5 w-5 text-blue-600" />
-        <h3 className="text-xl font-medium">Estimator Availability</h3>
+      <div className="flex items-center space-x-2">
+        <CalendarDays className="h-5 w-5 text-muted-foreground" />
+        <h3 className="text-lg font-medium">Estimator Availability</h3>
       </div>
       
       <div className="mb-6">
-        <Card className="border-blue-200 shadow-md">
-          <CardHeader className="pb-2 bg-blue-50 border-b">
-            <CardTitle className="text-lg text-blue-800">Next Available Time Slots</CardTitle>
+        <Card>
+          <CardHeader className="pb-2 border-b">
+            <CardTitle className="text-base">Next Available Time Slots</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {nextAvailableTimes.map(item => (
                 <div 
                   key={item.estimatorId}
-                  className={`p-4 border rounded-md hover:bg-blue-50 cursor-pointer transition-colors ${
-                    selectedEstimatorId === item.estimatorId ? "bg-blue-50 border-blue-300" : ""
-                  }`}
+                  className="p-3 border rounded-md hover:bg-blue-50 cursor-pointer transition-colors"
                   onClick={() => item.nextAvailableDate && handleSelectTimeSlot(item.nextAvailableDate, item.estimatorId)}
                 >
-                  <div className="flex items-center space-x-2 mb-3">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center space-x-2 mb-2">
+                    <User className="h-4 w-4 text-blue-600" />
                     <span className="font-medium">{item.estimatorName}</span>
                   </div>
                   {item.nextAvailableDate ? (
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="h-4 w-4 mr-1" />
+                        <Clock className="h-3 w-3 mr-1" />
                         <span>
-                          Available: {format(new Date(item.nextAvailableDate), 'MMM dd, eee')}
+                          Next available: {format(new Date(item.nextAvailableDate), 'MMM dd, eee')}
                         </span>
                       </div>
                       <Badge variant="outline" className="bg-green-50 text-green-800">
