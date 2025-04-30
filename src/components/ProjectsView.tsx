@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/toast";
+import { Search } from "lucide-react";
 
 // Mocked project data
 const mockProjects = [
@@ -61,6 +63,10 @@ export const ProjectsView = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [quickFilterProjectName, setQuickFilterProjectName] = useState("");
+  const [quickFilterClientName, setQuickFilterClientName] = useState("");
+  const [filteredQuickResults, setFilteredQuickResults] = useState<any[]>([]);
+  const [showQuickResults, setShowQuickResults] = useState(false);
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
@@ -77,6 +83,24 @@ export const ProjectsView = () => {
     
     return matchesSearch;
   });
+
+  // Quick filter effect
+  useEffect(() => {
+    if (quickFilterProjectName.trim() === '' && quickFilterClientName.trim() === '') {
+      setFilteredQuickResults([]);
+      setShowQuickResults(false);
+      return;
+    }
+
+    const results = mockProjects.filter(project => {
+      const matchesProjectName = project.projectName.toLowerCase().includes(quickFilterProjectName.toLowerCase());
+      const matchesClientName = project.clientName.toLowerCase().includes(quickFilterClientName.toLowerCase());
+      return matchesProjectName && (quickFilterClientName.trim() === '' || matchesClientName);
+    });
+
+    setFilteredQuickResults(results);
+    setShowQuickResults(true);
+  }, [quickFilterProjectName, quickFilterClientName]);
 
   const handleSelectProject = (projectId: string) => {
     setSelectedProjects(prev => {
@@ -115,12 +139,81 @@ export const ProjectsView = () => {
     }
   };
 
+  const openCreateProjectWithValues = () => {
+    setShowCreateProject(true);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Projects</h2>
         <Button onClick={() => setShowCreateProject(true)}>Create Project</Button>
       </div>
+
+      {/* Quick Project Creation / Search Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Quick Project Creation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="quickProjectName" className="block text-sm font-medium mb-1">Project Name</label>
+              <div className="relative">
+                <Input
+                  id="quickProjectName"
+                  placeholder="Enter project name..."
+                  value={quickFilterProjectName}
+                  onChange={(e) => setQuickFilterProjectName(e.target.value)}
+                />
+                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="quickClientName" className="block text-sm font-medium mb-1">Client Name</label>
+              <div className="relative">
+                <Input
+                  id="quickClientName"
+                  placeholder="Enter client name..."
+                  value={quickFilterClientName}
+                  onChange={(e) => setQuickFilterClientName(e.target.value)}
+                />
+                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          
+          {showQuickResults && filteredQuickResults.length > 0 && (
+            <div className="mt-2 mb-4 p-3 border rounded-md bg-amber-50">
+              <h3 className="font-medium mb-2">Similar Projects Found:</h3>
+              <ul className="space-y-2">
+                {filteredQuickResults.slice(0, 3).map(project => (
+                  <li key={project.id} className="flex justify-between items-center border-b pb-2">
+                    <div>
+                      <span className="font-medium">{project.projectName}</span> 
+                      <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
+                      {project.status}
+                    </span>
+                  </li>
+                ))}
+                {filteredQuickResults.length > 3 && (
+                  <li className="text-sm text-gray-600 italic">
+                    + {filteredQuickResults.length - 3} more projects match your search
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          
+          <div className="flex justify-end">
+            <Button onClick={openCreateProjectWithValues}>
+              Create New Project
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -227,7 +320,12 @@ export const ProjectsView = () => {
               <CardTitle>Create New Project</CardTitle>
             </CardHeader>
             <CardContent>
-              <CreateProjectForm onCancel={() => setShowCreateProject(false)} onSuccess={() => {}} />
+              <CreateProjectForm 
+                onCancel={() => setShowCreateProject(false)} 
+                onSuccess={() => {}}
+                initialProjectName={quickFilterProjectName}
+                initialClientName={quickFilterClientName}
+              />
             </CardContent>
           </Card>
         </div>
