@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Eye, Clipboard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for sub-projects
@@ -64,6 +64,7 @@ interface SubProjectsViewProps {
 
 export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddSubProject, setShowAddSubProject] = useState(false);
   const [selectedSubProject, setSelectedSubProject] = useState<any | null>(null);
@@ -137,6 +138,16 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
     toast({
       title: "2D View",
       description: `Opening 2D layout for ${subProject.name}. This feature will be implemented in a future update.`,
+    });
+  };
+
+  const handleManageBom = (subProjectId: string, subProject: any) => {
+    navigate(`/bom/${subProjectId}`, { 
+      state: { 
+        subProject,
+        projectId,
+        projectName
+      }
     });
   };
 
@@ -320,6 +331,15 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                                 title="2D View"
                               >
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleManageBom(subProject.id, subProject)}
+                                className="text-green-500 hover:text-green-700 hover:bg-green-50"
+                                title="Create/Manage BOM"
+                              >
+                                <Clipboard className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>

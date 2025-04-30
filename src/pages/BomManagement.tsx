@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect, useParams, useLocation, useNavigate } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, FileText, Download, Filter } from "lucide-react";
+import { Plus, Trash2, FileText, Download, Filter, ArrowLeft } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -55,6 +56,13 @@ const BomManagement = () => {
   const [editMode, setEditMode] = useState(false);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   
+  const { subProjectId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const subProject = location.state?.subProject;
+  const projectId = location.state?.projectId;
+  const projectName = location.state?.projectName;
+
   // Define columns for AG Grid
   const columnDefs: ColDef[] = [
     { 
@@ -262,17 +270,53 @@ const BomManagement = () => {
   
   const grandTotal = totalMaterialCost + totalLaborCost;
 
+  const goBackToProject = () => {
+    if (projectId) {
+      navigate(`/project/${projectId}`);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation pageTitle="Bill of Materials Management" />
+      <Navigation pageTitle="BOM Management" />
       
       <div className="container mx-auto p-4">
+        {/* Sub-project panel header */}
+        {subProject && (
+          <div className="mb-6">
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={goBackToProject}>
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Back to Project
+              </Button>
+              <h1 className="text-2xl font-bold">{projectName || "Project"}</h1>
+            </div>
+            <div className="bg-white p-4 rounded-md shadow mt-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">{subProject.name}</h2>
+                  <p className="text-gray-600">ID: {subProject.id}</p>
+                </div>
+                <div className="mt-2 md:mt-0">
+                  <p className="text-gray-700">
+                    <span className="font-medium">{subProject.panelType} Panel</span> | 
+                    Qty: {subProject.quantity} | 
+                    {subProject.boardRating}, {subProject.ipRating}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
-                Bill of Materials Items
+                {subProject ? `BOM for ${subProject.name}` : "Bill of Materials Items"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -294,7 +338,7 @@ const BomManagement = () => {
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_all">All Categories</SelectItem>
+                      <SelectItem value="">All Categories</SelectItem>
                       {defaultCategories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
