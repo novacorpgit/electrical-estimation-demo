@@ -282,11 +282,11 @@ export const CreateProjectForm = ({ onCancel, onSuccess }: CreateProjectFormProp
         />
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel} type="button">
+      <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t mt-8">
+        <Button variant="outline" onClick={onCancel} type="button" size="lg">
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} size="lg">
           {isSubmitting ? "Creating..." : "Create Project"}
         </Button>
       </div>

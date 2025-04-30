@@ -157,11 +157,11 @@ export const BomItemForm: React.FC<BomItemFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel} type="button">
+      <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t">
+        <Button variant="outline" onClick={onCancel} type="button" size="lg">
           Cancel
         </Button>
-        <Button type="submit">
+        <Button type="submit" size="lg">
           {editItem ? "Update Item" : "Add Item"}
         </Button>
       </div>

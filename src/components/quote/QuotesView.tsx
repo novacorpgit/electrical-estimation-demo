@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { QuoteForm } from "./QuoteForm";
 import { BomItem, Quote } from "./bom/BomTypes";
 import { QuoteDetailView } from "./QuoteDetailView";
+import { X } from "lucide-react";
 
 // Mock quote data with BOM items
 const mockQuotes: Quote[] = [
@@ -268,7 +269,18 @@ export const QuotesView = () => {
 
       {showCreateQuote && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto relative">
+            <Button 
+              variant="ghost" 
+              className="absolute right-2 top-2 p-2" 
+              onClick={() => {
+                setShowCreateQuote(false);
+                setSelectedQuote(null);
+              }}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
             <CardHeader>
               <CardTitle>Create Quote</CardTitle>
             </CardHeader>
