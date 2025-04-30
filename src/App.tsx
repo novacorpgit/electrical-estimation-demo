@@ -12,6 +12,7 @@ import PanelLayout from './pages/PanelLayout';
 import UserManagement from './pages/UserManagement';
 import UserProfile from './pages/UserProfile';
 import QuotationPage from './pages/QuotationPage';
+import BomUploadPage from './pages/BomUploadPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/users" element={<UserManagement />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/quotation/:projectId/:subProjectId" element={<QuotationPage />} />
+          <Route path="/bom-upload" element={<BomUploadPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

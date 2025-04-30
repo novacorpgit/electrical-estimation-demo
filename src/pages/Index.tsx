@@ -31,7 +31,7 @@ const Index = () => {
       
       <main className="container mx-auto p-4 mt-4">
         <div className="mb-6">
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant={activeView === 'dashboard' ? 'default' : 'outline'} 
               onClick={() => handleViewChange('dashboard')}
@@ -55,6 +55,12 @@ const Index = () => {
               onClick={() => handleViewChange('templates')}
             >
               Panel Templates
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/bom-upload')}
+            >
+              BOM Upload
             </Button>
           </div>
         </div>

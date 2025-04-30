@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Package, Users } from "lucide-react";
+import { Home, FileText, Package, Users, Upload } from "lucide-react";
 import { 
   NavigationMenu, 
   NavigationMenuContent, 
@@ -71,6 +71,17 @@ export const Navigation = ({ pageTitle }: NavigationProps) => {
               >
                 <Package className="h-4 w-4" />
                 <span>BOM Management</span>
+              </Button>
+            </NavigationMenuItem>
+            
+            <NavigationMenuItem>
+              <Button 
+                variant={isActive('/bom-upload') ? 'default' : 'ghost'} 
+                onClick={() => navigate('/bom-upload')}
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                <span>BOM Upload</span>
               </Button>
             </NavigationMenuItem>
             
