@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BomItem, defaultCategories } from "./BomTypes";
+import { BomItem, BomItemCategory, defaultCategories } from "./BomTypes";
 import { v4 as uuidv4 } from 'uuid';
 
 interface BomItemFormProps {
@@ -54,7 +54,8 @@ export const BomItemForm: React.FC<BomItemFormProps> = ({
   };
 
   const handleCategoryChange = (value: string) => {
-    setItem({ ...item, category: value });
+    // Ensure the value is a valid BomItemCategory before setting it
+    setItem({ ...item, category: value as BomItemCategory });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
