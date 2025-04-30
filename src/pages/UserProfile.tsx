@@ -17,6 +17,7 @@ import {
   TabsTrigger 
 } from "@/components/ui/tabs";
 import { UserLeaveView } from "@/components/users/UserLeaveView";
+import { UserCalendarImport } from "@/components/users/UserCalendarImport";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -174,8 +175,9 @@ const UserProfile: React.FC = () => {
           <Card className="md:col-span-2">
             <Tabs defaultValue="leave" className="w-full">
               <CardHeader>
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="leave">Leave & Balance</TabsTrigger>
+                  <TabsTrigger value="calendar">Personal Calendar</TabsTrigger>
                   <TabsTrigger value="work">Work Hours</TabsTrigger>
                   <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
@@ -183,6 +185,9 @@ const UserProfile: React.FC = () => {
               <CardContent>
                 <TabsContent value="leave" className="mt-0">
                   <UserLeaveView user={user} />
+                </TabsContent>
+                <TabsContent value="calendar" className="mt-0">
+                  <UserCalendarImport user={user} />
                 </TabsContent>
                 <TabsContent value="work" className="mt-0">
                   <div className="p-4 bg-gray-50 border rounded-lg">
