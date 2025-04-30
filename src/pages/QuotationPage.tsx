@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { QuotationDetails } from "@/components/quote/QuotationDetails";
 import { QuotationPreview } from "@/components/quote/QuotationPreview";
+import { QuoteForm } from "@/components/quote/QuoteForm";
+import { QuotationFormats } from "@/components/quote/QuotationFormats";
 
 // Mock data - in a real app, this would come from your API or state management
 const getMockQuoteData = (projectId: string, subProjectId: string) => {
@@ -172,6 +174,9 @@ export const QuotationPage = () => {
   const [quoteData, setQuoteData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showExportOptions, setShowExportOptions] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [selectedFormat, setSelectedFormat] = useState<string>("standard");
+  const [showFormatsDialog, setShowFormatsDialog] = useState<boolean>(false);
 
   useEffect(() => {
     if (!projectId || !subProjectId) {
@@ -240,8 +245,63 @@ export const QuotationPage = () => {
     }
   };
 
+  const handleSaveQuote = (updatedData: any) => {
+    setQuoteData(updatedData);
+    setIsEditing(false);
+    
+    toast({
+      title: "Quote updated",
+      description: `Quote ${updatedData.quoteNumber} has been updated successfully.`,
+    });
+  };
+
+  const handleApplyFormat = (formatId: string) => {
+    setSelectedFormat(formatId);
+    setShowFormatsDialog(false);
+    
+    toast({
+      title: "Format applied",
+      description: `Quotation format '${formatId}' has been applied successfully.`,
+    });
+  };
+
   if (loading || !quoteData) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (isEditing) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <main className="container mx-auto p-4 mt-4">
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditing(false)}
+              >
+                Cancel Editing
+              </Button>
+              <h1 className="text-3xl font-bold mt-2">Edit Quotation</h1>
+              <p className="text-gray-500">Quote #{quoteData.quoteNumber} for {quoteData.subProject.name}</p>
+            </div>
+          </div>
+          
+          <QuoteForm 
+            subProjectId={subProjectId || ""} 
+            subProjectName={quoteData.subProject.name} 
+            onCancel={() => setIsEditing(false)}
+            onSuccess={() => {
+              setIsEditing(false);
+              toast({
+                title: "Quote updated",
+                description: `Quote ${quoteData.quoteNumber} has been updated successfully.`,
+              });
+            }}
+          />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -268,6 +328,14 @@ export const QuotationPage = () => {
           </div>
 
           <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFormatsDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Formats
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => setShowExportOptions(true)}
@@ -297,11 +365,18 @@ export const QuotationPage = () => {
                   <SheetTitle>Quote Preview</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 overflow-y-auto">
-                  <QuotationPreview quoteData={quoteData} />
+                  <QuotationPreview quoteData={quoteData} formatId={selectedFormat} />
                 </div>
               </SheetContent>
             </Sheet>
-            <Button variant="default">Edit Quotation</Button>
+            <Button 
+              variant="default" 
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Edit Quotation
+            </Button>
           </div>
         </div>
 
@@ -524,6 +599,29 @@ export const QuotationPage = () => {
             >
               <Printer className="mr-2 h-4 w-4" />
               Export to PDF
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={showFormatsDialog} onOpenChange={setShowFormatsDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quote Formats</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose a format template for your quotation
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <QuotationFormats 
+              selectedFormat={selectedFormat}
+              onSelectFormat={handleApplyFormat}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button onClick={() => setShowFormatsDialog(false)}>
+              Apply Format
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
