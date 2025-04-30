@@ -1,4 +1,3 @@
-
 // Core Entity Types
 
 export interface Project {
@@ -7,6 +6,7 @@ export interface Project {
   projectName: string;
   state: string; // B, P, S, M, T
   estimatorId?: string;
+  estimatorHours?: number; // Added field for estimator hours
   notes?: string;
   poNumber?: string;
   files?: string[];

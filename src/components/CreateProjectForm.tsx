@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ type ProjectFormData = {
   status: string;
   description: string;
   notes: string;
+  estimatorHours: string; // New field
 };
 
 interface CreateProjectFormProps {
@@ -55,6 +57,7 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
     status: "Draft",
     description: "",
     notes: "",
+    estimatorHours: "", // New field with empty default
   });
 
   // Update form data if initialData changes
@@ -211,6 +214,20 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
             type="date"
             value={formData.startDate}
             onChange={handleChange}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="estimatorHours">Estimator Hours</Label>
+          <Input
+            id="estimatorHours"
+            name="estimatorHours"
+            type="number"
+            placeholder="Enter estimated hours"
+            value={formData.estimatorHours}
+            onChange={handleChange}
+            min="0"
+            step="0.5"
           />
         </div>
 
