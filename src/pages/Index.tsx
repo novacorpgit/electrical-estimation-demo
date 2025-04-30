@@ -5,9 +5,20 @@ import { ProjectsView } from "@/components/ProjectsView";
 import { ClientsView } from "@/components/ClientsView";
 import { QuotesView } from "@/components/quote/QuotesView";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'clients' | 'templates' | 'quotes'>('dashboard');
+  const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'clients' | 'templates' | 'quotes' | 'bom'>('dashboard');
+
+  const handleViewChange = (view: typeof activeView) => {
+    if (view === 'bom') {
+      navigate('/bom');
+      return;
+    }
+    
+    setActiveView(view);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -19,7 +30,7 @@ const Index = () => {
               <li>
                 <Button 
                   variant={activeView === 'dashboard' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveView('dashboard')}
+                  onClick={() => handleViewChange('dashboard')}
                 >
                   Dashboard
                 </Button>
@@ -27,7 +38,7 @@ const Index = () => {
               <li>
                 <Button 
                   variant={activeView === 'projects' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveView('projects')}
+                  onClick={() => handleViewChange('projects')}
                 >
                   Projects
                 </Button>
@@ -35,7 +46,7 @@ const Index = () => {
               <li>
                 <Button 
                   variant={activeView === 'clients' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveView('clients')}
+                  onClick={() => handleViewChange('clients')}
                 >
                   Clients
                 </Button>
@@ -43,15 +54,23 @@ const Index = () => {
               <li>
                 <Button 
                   variant={activeView === 'quotes' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveView('quotes')}
+                  onClick={() => handleViewChange('quotes')}
                 >
                   Quotes
                 </Button>
               </li>
               <li>
                 <Button 
+                  variant={activeView === 'bom' ? 'default' : 'ghost'} 
+                  onClick={() => handleViewChange('bom')}
+                >
+                  BOM Management
+                </Button>
+              </li>
+              <li>
+                <Button 
                   variant={activeView === 'templates' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveView('templates')}
+                  onClick={() => handleViewChange('templates')}
                 >
                   Panel Templates
                 </Button>
