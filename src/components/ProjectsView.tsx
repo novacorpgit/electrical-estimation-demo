@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +6,16 @@ import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Calendar, Clock, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateClientForm } from "./CreateClientForm";
+import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
+import { format, parseISO } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Mocked project data
 const mockProjects = [
@@ -88,6 +94,10 @@ export const ProjectsView = () => {
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [filteredClients, setFilteredClients] = useState<any[]>([]);
   const [showClientResults, setShowClientResults] = useState(false);
+  const [showEstimatorAvailability, setShowEstimatorAvailability] = useState(false);
+  const [selectedEstimatorId, setSelectedEstimatorId] = useState<string | null>(null);
+  const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
+  const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
@@ -198,6 +208,30 @@ export const ProjectsView = () => {
       title: "Client Created",
       description: `Client "${clientName}" has been created successfully.`,
     });
+  };
+
+  const handleAssignEstimator = (project: any) => {
+    setSelectedProjectForEstimator(project);
+    setShowEstimatorAvailability(true);
+  };
+
+  const handleEstimatorSelect = (date: string, estimatorId: string) => {
+    setSelectedEstimatorDate(date);
+    setSelectedEstimatorId(estimatorId);
+  };
+
+  const confirmEstimatorAssignment = () => {
+    if (selectedProjectForEstimator && selectedEstimatorId && selectedEstimatorDate) {
+      // In a real app, we would save this to the database
+      toast({
+        title: "Estimator Assigned",
+        description: `Estimator has been assigned to ${selectedProjectForEstimator.projectName} for ${format(new Date(selectedEstimatorDate), 'MMM dd, yyyy')}.`,
+      });
+      setShowEstimatorAvailability(false);
+      setSelectedEstimatorId(null);
+      setSelectedEstimatorDate(null);
+      setSelectedProjectForEstimator(null);
+    }
   };
 
   return (
@@ -382,7 +416,24 @@ export const ProjectsView = () => {
                           </td>
                           <td className="p-4 font-medium">{project.projectName}</td>
                           <td className="p-4">{project.clientName}</td>
-                          <td className="p-4">{project.estimatorName || "-"}</td>
+                          <td className="p-4">
+                            {project.estimatorName ? (
+                              <div className="flex items-center space-x-2">
+                                <User className="h-4 w-4 text-gray-500" />
+                                <span>{project.estimatorName}</span>
+                              </div>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center space-x-1 text-blue-600"
+                                onClick={() => handleAssignEstimator(project)}
+                              >
+                                <User className="h-4 w-4" />
+                                <span>Assign</span>
+                              </Button>
+                            )}
+                          </td>
                           <td className="p-4">{project.state}</td>
                           <td className="p-4">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
@@ -448,6 +499,52 @@ export const ProjectsView = () => {
             onCancel={() => setShowCreateClient(false)}
             onSuccess={() => handleClientCreated(quickFilterClientName)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Estimator Availability Dialog */}
+      <Dialog open={showEstimatorAvailability} onOpenChange={setShowEstimatorAvailability}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedProjectForEstimator && `Assign Estimator for ${selectedProjectForEstimator.projectName}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <EstimatorAvailability 
+              onSelectDate={handleEstimatorSelect}
+              selectedDate={selectedEstimatorDate || undefined}
+              selectedEstimatorId={selectedEstimatorId || undefined}
+            />
+            
+            {selectedEstimatorId && selectedEstimatorDate && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+                <h3 className="text-lg font-medium text-green-800 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Estimator Selected
+                </h3>
+                <p className="text-green-700 flex items-center mt-2">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Scheduled for {format(new Date(selectedEstimatorDate), 'MMMM d, yyyy')}
+                </p>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowEstimatorAvailability(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={confirmEstimatorAssignment}
+                disabled={!selectedEstimatorId || !selectedEstimatorDate}
+              >
+                Assign Estimator
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock } from "lucide-react";
+import { CalendarDays, Clock, User } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 interface EstimatorSchedule {
@@ -47,6 +47,16 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
           availableHours: 4, 
           bookedHours: 4 
         },
+        { 
+          date: format(addDays(new Date(), 3), 'yyyy-MM-dd'), 
+          availableHours: 6, 
+          bookedHours: 2 
+        },
+        { 
+          date: format(addDays(new Date(), 4), 'yyyy-MM-dd'), 
+          availableHours: 8, 
+          bookedHours: 0 
+        },
       ]
     },
     {
@@ -67,6 +77,16 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
           date: format(addDays(new Date(), 2), 'yyyy-MM-dd'), 
           availableHours: 8, 
           bookedHours: 0 
+        },
+        { 
+          date: format(addDays(new Date(), 3), 'yyyy-MM-dd'), 
+          availableHours: 5, 
+          bookedHours: 3 
+        },
+        { 
+          date: format(addDays(new Date(), 4), 'yyyy-MM-dd'), 
+          availableHours: 4, 
+          bookedHours: 4 
         },
       ]
     },
@@ -89,6 +109,16 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
           availableHours: 4, 
           bookedHours: 4 
         },
+        { 
+          date: format(addDays(new Date(), 3), 'yyyy-MM-dd'), 
+          availableHours: 8, 
+          bookedHours: 0 
+        },
+        { 
+          date: format(addDays(new Date(), 4), 'yyyy-MM-dd'), 
+          availableHours: 7, 
+          bookedHours: 1 
+        },
       ]
     }
   ];
@@ -99,6 +129,17 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
     }
   };
 
+  // Find the next available date for each estimator
+  const nextAvailableTimes = mockEstimators.map(estimator => {
+    const nextAvailable = estimator.availability.find(slot => slot.availableHours > 0);
+    return {
+      estimatorId: estimator.id,
+      estimatorName: estimator.name,
+      nextAvailableDate: nextAvailable?.date || null,
+      availableHours: nextAvailable?.availableHours || 0
+    };
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
@@ -106,14 +147,56 @@ export const EstimatorAvailability: React.FC<EstimatorAvailabilityProps> = ({
         <h3 className="text-lg font-medium">Estimator Availability</h3>
       </div>
       
+      <div className="mb-6">
+        <Card>
+          <CardHeader className="pb-2 border-b">
+            <CardTitle className="text-base">Next Available Time Slots</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {nextAvailableTimes.map(item => (
+                <div 
+                  key={item.estimatorId}
+                  className="p-3 border rounded-md hover:bg-blue-50 cursor-pointer transition-colors"
+                  onClick={() => item.nextAvailableDate && handleSelectTimeSlot(item.nextAvailableDate, item.estimatorId)}
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">{item.estimatorName}</span>
+                  </div>
+                  {item.nextAvailableDate ? (
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>
+                          Next available: {format(new Date(item.nextAvailableDate), 'MMM dd, eee')}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-800">
+                        {item.availableHours}h
+                      </Badge>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-red-600">No availability</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {mockEstimators.map((estimator) => (
           <Card 
             key={estimator.id} 
-            className={selectedEstimatorId === estimator.id ? "border-primary" : ""}
+            className={selectedEstimatorId === estimator.id ? "border-primary shadow-md" : ""}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">{estimator.name}</CardTitle>
+              <CardTitle className="text-base flex items-center">
+                <User className="h-4 w-4 mr-2 text-blue-600" />
+                {estimator.name}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
