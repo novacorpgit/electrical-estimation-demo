@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,13 +33,17 @@ type ProjectFormData = {
 interface CreateProjectFormProps {
   onCancel: () => void;
   onSuccess?: () => void;
+  initialData?: {
+    projectName?: string;
+    clientName?: string;
+  };
 }
 
-export const CreateProjectForm = ({ onCancel, onSuccess }: CreateProjectFormProps) => {
+export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreateProjectFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<ProjectFormData>({
-    projectName: "",
-    clientName: "",
+    projectName: initialData?.projectName || "",
+    clientName: initialData?.clientName || "",
     salesRep: "",
     address: "",
     state: "",
@@ -53,6 +56,17 @@ export const CreateProjectForm = ({ onCancel, onSuccess }: CreateProjectFormProp
     description: "",
     notes: "",
   });
+
+  // Update form data if initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({
+        ...prev,
+        projectName: initialData.projectName || prev.projectName,
+        clientName: initialData.clientName || prev.clientName
+      }));
+    }
+  }, [initialData]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 

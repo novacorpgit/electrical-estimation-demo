@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
 
 // Mocked project data
@@ -59,6 +58,7 @@ const mockProjects = [
 ];
 
 export const ProjectsView = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -323,8 +323,10 @@ export const ProjectsView = () => {
               <CreateProjectForm 
                 onCancel={() => setShowCreateProject(false)} 
                 onSuccess={() => {}}
-                initialProjectName={quickFilterProjectName}
-                initialClientName={quickFilterClientName}
+                initialData={{
+                  projectName: quickFilterProjectName,
+                  clientName: quickFilterClientName
+                }}
               />
             </CardContent>
           </Card>
