@@ -219,3 +219,80 @@ export interface User {
   status: 'Active' | 'Inactive';
   initials: string;
 }
+
+// User Management Related Types
+
+export interface UserRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permission {
+  id: string;
+  resource: string;
+  action: 'create' | 'read' | 'update' | 'delete' | 'manage';
+  description: string;
+}
+
+export interface ExtendedUser extends User {
+  roleId: string;
+  roleName?: string;
+  uniqueCode: string;
+  workHoursPerWeek: number;
+  department?: string;
+  managerId?: string;
+  contactNumber?: string;
+  emergencyContact?: string;
+  joinDate: string;
+  holidays: Holiday[];
+  leaveBalance: LeaveBalance;
+  profilePicture?: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  countryCode: string;
+  isRecurring: boolean;
+  type: 'National' | 'Religious' | 'Optional' | 'Corporate';
+}
+
+export interface LeaveRequest {
+  id: string;
+  userId: string;
+  startDate: string;
+  endDate: string;
+  type: 'Annual' | 'Sick' | 'Personal' | 'Maternity' | 'Paternity' | 'Unpaid';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
+  reason?: string;
+  approvedById?: string;
+  createdAt: string;
+  updatedAt: string;
+  googleCalendarEventId?: string;
+}
+
+export interface LeaveBalance {
+  annual: number;
+  sick: number;
+  personal: number;
+  maternity: number;
+  paternity: number;
+  carried: number;
+}
+
+export interface WorkHoursLog {
+  id: string;
+  userId: string;
+  projectId?: string;
+  date: string;
+  hours: number;
+  description: string;
+  status: 'Logged' | 'Approved' | 'Rejected';
+  createdAt: string;
+  updatedAt: string;
+}
