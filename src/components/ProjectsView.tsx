@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,9 @@ import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreateClientForm } from "./CreateClientForm";
 
 // Mocked project data
 const mockProjects = [
@@ -18,6 +21,7 @@ const mockProjects = [
     status: "In Progress",
     startDate: "2025-04-10",
     priority: "High",
+    estimatorName: "John Smith",
   },
   {
     id: "P002",
@@ -27,6 +31,7 @@ const mockProjects = [
     status: "Draft",
     startDate: "2025-05-15",
     priority: "Normal",
+    estimatorName: "Emily Johnson",
   },
   {
     id: "P003",
@@ -36,6 +41,7 @@ const mockProjects = [
     status: "Completed",
     startDate: "2025-03-01",
     priority: "Critical",
+    estimatorName: "Michael Brown",
   },
   {
     id: "P004",
@@ -45,6 +51,7 @@ const mockProjects = [
     status: "On Hold",
     startDate: "2025-06-20",
     priority: "Normal",
+    estimatorName: "Sarah Wilson",
   },
   {
     id: "P005",
@@ -54,7 +61,17 @@ const mockProjects = [
     status: "In Progress",
     startDate: "2025-04-25",
     priority: "High",
+    estimatorName: "Robert Davis",
   },
+];
+
+// Mock clients for dropdown
+const mockClients = [
+  { id: "C001", name: "ABC Construction" },
+  { id: "C002", name: "XYZ Properties" },
+  { id: "C003", name: "State Health Department" },
+  { id: "C004", name: "Retail Developers Group" },
+  { id: "C005", name: "Industrial Manufacturers" },
 ];
 
 export const ProjectsView = () => {
@@ -68,6 +85,9 @@ export const ProjectsView = () => {
   const [filteredQuickResults, setFilteredQuickResults] = useState<any[]>([]);
   const [showQuickResults, setShowQuickResults] = useState(false);
   const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<any>(null);
+  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [filteredClients, setFilteredClients] = useState<any[]>([]);
+  const [showClientResults, setShowClientResults] = useState(false);
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
@@ -85,7 +105,7 @@ export const ProjectsView = () => {
     return matchesSearch;
   });
 
-  // Quick filter effect
+  // Quick filter effect for projects
   useEffect(() => {
     if (quickFilterProjectName.trim() === '' && quickFilterClientName.trim() === '') {
       setFilteredQuickResults([]);
@@ -102,6 +122,22 @@ export const ProjectsView = () => {
     setFilteredQuickResults(results);
     setShowQuickResults(true);
   }, [quickFilterProjectName, quickFilterClientName]);
+
+  // Client filter effect
+  useEffect(() => {
+    if (quickFilterClientName.trim() === '') {
+      setFilteredClients([]);
+      setShowClientResults(false);
+      return;
+    }
+
+    const results = mockClients.filter(client => 
+      client.name.toLowerCase().includes(quickFilterClientName.toLowerCase())
+    );
+
+    setFilteredClients(results);
+    setShowClientResults(true);
+  }, [quickFilterClientName]);
 
   const handleSelectProject = (projectId: string) => {
     setSelectedProjects(prev => {
@@ -150,6 +186,20 @@ export const ProjectsView = () => {
     setShowCreateProject(true);
   };
 
+  const handleCreateClient = () => {
+    setShowClientResults(false);
+    setShowCreateClient(true);
+  };
+
+  const handleClientCreated = (clientName: string) => {
+    setShowCreateClient(false);
+    setQuickFilterClientName(clientName);
+    toast({
+      title: "Client Created",
+      description: `Client "${clientName}" has been created successfully.`,
+    });
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -184,8 +234,42 @@ export const ProjectsView = () => {
                   placeholder="Enter client name..."
                   value={quickFilterClientName}
                   onChange={(e) => setQuickFilterClientName(e.target.value)}
+                  onFocus={() => {
+                    if (quickFilterClientName.trim() !== '') {
+                      setShowClientResults(true);
+                    }
+                  }}
                 />
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                
+                {/* Client dropdown results */}
+                {showClientResults && (
+                  <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border">
+                    <ul className="py-1 max-h-60 overflow-auto">
+                      {filteredClients.map(client => (
+                        <li 
+                          key={client.id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setQuickFilterClientName(client.name);
+                            setShowClientResults(false);
+                          }}
+                        >
+                          {client.name}
+                        </li>
+                      ))}
+                      {filteredClients.length === 0 && (
+                        <li 
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-blue-600 flex items-center"
+                          onClick={handleCreateClient}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create new client "{quickFilterClientName}"
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -269,6 +353,7 @@ export const ProjectsView = () => {
                       </th>
                       <th className="h-10 px-4 text-left">Project Name</th>
                       <th className="h-10 px-4 text-left">Client</th>
+                      <th className="h-10 px-4 text-left">Estimator</th>
                       <th className="h-10 px-4 text-left">State</th>
                       <th className="h-10 px-4 text-left">Status</th>
                       <th className="h-10 px-4 text-left">Priority</th>
@@ -279,7 +364,7 @@ export const ProjectsView = () => {
                   <tbody>
                     {filteredProjects.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="h-24 text-center text-muted-foreground">
+                        <td colSpan={9} className="h-24 text-center text-muted-foreground">
                           No projects found.
                         </td>
                       </tr>
@@ -297,6 +382,7 @@ export const ProjectsView = () => {
                           </td>
                           <td className="p-4 font-medium">{project.projectName}</td>
                           <td className="p-4">{project.clientName}</td>
+                          <td className="p-4">{project.estimatorName || "-"}</td>
                           <td className="p-4">{project.state}</td>
                           <td className="p-4">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
@@ -351,6 +437,19 @@ export const ProjectsView = () => {
           </Card>
         </div>
       )}
+
+      {/* Client Creation Dialog */}
+      <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Client</DialogTitle>
+          </DialogHeader>
+          <CreateClientForm 
+            onCancel={() => setShowCreateClient(false)}
+            onSuccess={() => handleClientCreated(quickFilterClientName)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
