@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { PanelboardDashboard } from "@/components/PanelboardDashboard";
 import { ProjectsView } from "@/components/ProjectsView";
 import { ClientsView } from "@/components/ClientsView";
+import { QuotesView } from "@/components/quote/QuotesView";
 import { useState } from "react";
 
 const Index = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'clients' | 'templates'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'clients' | 'templates' | 'quotes'>('dashboard');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,6 +42,14 @@ const Index = () => {
               </li>
               <li>
                 <Button 
+                  variant={activeView === 'quotes' ? 'default' : 'ghost'} 
+                  onClick={() => setActiveView('quotes')}
+                >
+                  Quotes
+                </Button>
+              </li>
+              <li>
+                <Button 
                   variant={activeView === 'templates' ? 'default' : 'ghost'} 
                   onClick={() => setActiveView('templates')}
                 >
@@ -56,6 +65,7 @@ const Index = () => {
         {activeView === 'dashboard' && <PanelboardDashboard />}
         {activeView === 'projects' && <ProjectsView />}
         {activeView === 'clients' && <ClientsView />}
+        {activeView === 'quotes' && <QuotesView />}
         {activeView === 'templates' && <h2 className="text-xl font-bold">Panel Templates View (Coming Soon)</h2>}
       </main>
     </div>

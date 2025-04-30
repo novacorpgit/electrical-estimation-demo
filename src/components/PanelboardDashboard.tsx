@@ -1,7 +1,7 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { Progress } from "@/components/ui/progress";
 
@@ -24,6 +24,11 @@ export const PanelboardDashboard = () => {
             <div className="text-2xl font-bold">{pendingQuotes}</div>
             <Progress value={50} className="mt-2" />
           </CardContent>
+          <CardFooter className="pt-1">
+            <Link to="/quotes" className="text-xs text-blue-600 hover:underline">
+              View all quotes
+            </Link>
+          </CardFooter>
         </Card>
 
         <Card>
@@ -60,6 +65,11 @@ export const PanelboardDashboard = () => {
             <Button className="w-full" variant="outline">
               View All Projects
             </Button>
+            <Link to="/quotes">
+              <Button className="w-full" variant="outline">
+                View All Quotes
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
