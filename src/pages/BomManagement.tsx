@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
@@ -339,7 +338,7 @@ const BomManagement = () => {
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
+                      <SelectItem value="all">All Categories</SelectItem>
                       {defaultCategories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
