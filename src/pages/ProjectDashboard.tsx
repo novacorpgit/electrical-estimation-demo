@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -9,7 +8,8 @@ import { SubProjectsView } from "@/components/SubProjectsView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Calendar, Clock, ChartBar, TrendingUp } from "lucide-react";
+import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon } from "lucide-react";
+import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
 
 // Mock project data - would be fetched from API in a real app
 const getMockProject = (projectId: string) => {
@@ -152,6 +152,7 @@ export const ProjectDashboard = () => {
   const [project, setProject] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
 
   useEffect(() => {
     if (!projectId) {
@@ -209,6 +210,14 @@ export const ProjectDashboard = () => {
 
           <div className="flex space-x-2">
             <Button variant="outline">Export Project</Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => setShowQuoteGenerator(true)}
+            >
+              <BanknoteIcon className="h-4 w-4" />
+              Generate Quotation
+            </Button>
             <Button variant="default">Edit Project</Button>
           </div>
         </div>
@@ -398,6 +407,13 @@ export const ProjectDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      <QuoteGenerator
+        open={showQuoteGenerator}
+        onOpenChange={setShowQuoteGenerator}
+        projectId={projectId || ""}
+        projectName={project.projectName}
+      />
     </div>
   );
 };

@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { BomItem } from "./bom/BomTypes";
 import { BomList } from "./bom/BomList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { BanknoteIcon, FileText, Printer, Send, Download } from "lucide-react";
 
 type QuoteFormData = {
   quoteNumber: string;
@@ -32,6 +35,14 @@ type QuoteFormData = {
   offerExpiryDate: string;
   notes: string;
   bomItems: BomItem[];
+  paymentTerms: string;
+  versionHistory: {
+    version: number;
+    date: string;
+    status: string;
+  }[];
+  taxRate: number;
+  validityPeriod: number;
 };
 
 interface QuoteFormProps {
@@ -48,6 +59,8 @@ export const QuoteForm = ({
   onSuccess 
 }: QuoteFormProps) => {
   const { toast } = useToast();
+  const [showPreview, setShowPreview] = useState(false);
+  const [showExportOptions, setShowExportOptions] = useState(false);
   
   // Generate a mock quote number using the format in the requirements
   const generateQuoteNumber = (): string => {
@@ -75,6 +88,16 @@ export const QuoteForm = ({
     offerExpiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
     notes: "",
     bomItems: [],
+    paymentTerms: "50% deposit, 50% on completion",
+    versionHistory: [
+      {
+        version: 1,
+        date: new Date().toISOString().split("T")[0],
+        status: "Draft"
+      }
+    ],
+    taxRate: 10, // Default GST for Australia
+    validityPeriod: 30,
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +130,7 @@ export const QuoteForm = ({
     let parsedValue: string | number = value;
     
     // Parse numeric fields
-    if (['subtotalMaterials', 'subtotalLabour', 'marginPercent', 'additionalCosts', 'discountPercent'].includes(name)) {
+    if (['subtotalMaterials', 'subtotalLabour', 'marginPercent', 'additionalCosts', 'discountPercent', 'taxRate', 'validityPeriod'].includes(name)) {
       parsedValue = parseFloat(value) || 0;
     }
     
@@ -130,7 +153,9 @@ export const QuoteForm = ({
     
     const afterMargin = subtotal + marginAmount + data.additionalCosts;
     const discount = afterMargin * (data.discountPercent / 100);
-    const finalValue = afterMargin - discount;
+    const afterDiscount = afterMargin - discount;
+    const tax = afterDiscount * (data.taxRate / 100);
+    const finalValue = afterDiscount + tax;
     
     return { ...data, finalQuotedValue: parseFloat(finalValue.toFixed(2)) };
   };
@@ -153,6 +178,16 @@ export const QuoteForm = ({
     setIsSubmitting(true);
 
     try {
+      // Update version history
+      const updatedVersionHistory = [
+        ...formData.versionHistory,
+        {
+          version: formData.versionHistory.length + 1,
+          date: new Date().toISOString().split("T")[0],
+          status: formData.approvalStatus
+        }
+      ];
+      
       // Simulate API call
       setTimeout(() => {
         toast({
@@ -171,6 +206,44 @@ export const QuoteForm = ({
       });
       setIsSubmitting(false);
     }
+  };
+
+  const handleExport = (type: 'pdf' | 'excel') => {
+    setShowExportOptions(false);
+    
+    // Simulate export
+    toast({
+      title: `Exporting as ${type.toUpperCase()}`,
+      description: `Your quotation is being exported as a ${type.toUpperCase()} file.`,
+    });
+    
+    // In a real implementation, you would generate the file here
+    setTimeout(() => {
+      toast({
+        title: "Export complete",
+        description: `Your ${type.toUpperCase()} has been generated successfully.`,
+      });
+    }, 1500);
+  };
+
+  const handleMarkAsSent = () => {
+    setFormData(prev => ({
+      ...prev,
+      approvalStatus: "Sent",
+      versionHistory: [
+        ...prev.versionHistory,
+        {
+          version: prev.versionHistory.length + 1,
+          date: new Date().toISOString().split("T")[0],
+          status: "Sent"
+        }
+      ]
+    }));
+    
+    toast({
+      title: "Quote marked as sent",
+      description: `Quote ${formData.quoteNumber} has been marked as sent.`,
+    });
   };
 
   return (
@@ -248,6 +321,19 @@ export const QuoteForm = ({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="taxRate">Tax Rate %</Label>
+              <Input
+                id="taxRate"
+                name="taxRate"
+                type="number"
+                step="0.1"
+                placeholder="0.0"
+                value={formData.taxRate}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="additionalCosts">Additional Costs</Label>
               <Input
                 id="additionalCosts"
@@ -274,6 +360,17 @@ export const QuoteForm = ({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="paymentTerms">Payment Terms</Label>
+              <Input
+                id="paymentTerms"
+                name="paymentTerms"
+                value={formData.paymentTerms}
+                onChange={handleChange}
+                placeholder="Payment terms..."
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="approvalStatus">Approval Status</Label>
               <Select
                 value={formData.approvalStatus}
@@ -286,6 +383,7 @@ export const QuoteForm = ({
                   <SelectItem value="Draft">Draft</SelectItem>
                   <SelectItem value="Pending Approval">Pending Approval</SelectItem>
                   <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Sent">Sent</SelectItem>
                   <SelectItem value="Rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
@@ -298,6 +396,17 @@ export const QuoteForm = ({
                 name="offerExpiryDate"
                 type="date"
                 value={formData.offerExpiryDate}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="validityPeriod">Validity Period (days)</Label>
+              <Input
+                id="validityPeriod"
+                name="validityPeriod"
+                type="number"
+                value={formData.validityPeriod}
                 onChange={handleChange}
               />
             </div>
@@ -349,6 +458,23 @@ export const QuoteForm = ({
               rows={4}
             />
           </div>
+          
+          {formData.versionHistory.length > 1 && (
+            <div className="border rounded-md p-4">
+              <h4 className="font-medium mb-2">Version History</h4>
+              <div className="space-y-2">
+                {formData.versionHistory.map((version, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>Version {version.version}</span>
+                    <span>{version.date}</span>
+                    <span className={`px-2 py-1 rounded text-xs ${version.status === 'Draft' ? 'bg-gray-100' : 'bg-blue-100'}`}>
+                      {version.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="bom">
@@ -359,13 +485,181 @@ export const QuoteForm = ({
         </TabsContent>
       </Tabs>
       
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onCancel} type="button">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Quote"}
-        </Button>
+      <div className="flex justify-between pt-4 border-t">
+        <div className="space-x-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" type="button">
+                <FileText className="mr-2 h-4 w-4" />
+                Preview Quote
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-[600px] md:w-[900px]">
+              <SheetHeader>
+                <SheetTitle>Quote Preview</SheetTitle>
+              </SheetHeader>
+              <div className="mt-8 bg-white p-8 border rounded-md">
+                <div className="text-right mb-8">
+                  <h2 className="text-2xl font-bold">{formData.quoteNumber}</h2>
+                  <p>Date: {new Date().toLocaleDateString()}</p>
+                  <p>Valid until: {formData.offerExpiryDate}</p>
+                </div>
+                
+                <div className="mb-8">
+                  <h3 className="font-bold mb-2">Quote For:</h3>
+                  <p>Client Name</p>
+                  <p>Project: {subProjectName}</p>
+                </div>
+                
+                <table className="w-full mb-8">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Item</th>
+                      <th className="text-right py-2">Quantity</th>
+                      <th className="text-right py-2">Unit Price</th>
+                      <th className="text-right py-2">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.bomItems.map((item, idx) => (
+                      <tr key={idx} className="border-b">
+                        <td className="py-2">{item.description}</td>
+                        <td className="text-right py-2">{item.quantity}</td>
+                        <td className="text-right py-2">
+                          {item.unitCost.toLocaleString('en-AU', {
+                            style: 'currency',
+                            currency: formData.currency
+                          })}
+                        </td>
+                        <td className="text-right py-2">
+                          {item.totalCost.toLocaleString('en-AU', {
+                            style: 'currency',
+                            currency: formData.currency
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                <div className="flex justify-end mb-8">
+                  <div className="w-64">
+                    <div className="flex justify-between border-b py-2">
+                      <span>Subtotal:</span>
+                      <span>
+                        {(formData.subtotalMaterials + formData.subtotalLabour).toLocaleString('en-AU', {
+                          style: 'currency',
+                          currency: formData.currency
+                        })}
+                      </span>
+                    </div>
+                    {formData.discountPercent > 0 && (
+                      <div className="flex justify-between border-b py-2">
+                        <span>Discount ({formData.discountPercent}%):</span>
+                        <span>
+                          {((formData.subtotalMaterials + formData.subtotalLabour) * (formData.discountPercent / 100)).toLocaleString('en-AU', {
+                            style: 'currency',
+                            currency: formData.currency
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-b py-2">
+                      <span>Tax ({formData.taxRate}%):</span>
+                      <span>
+                        {((formData.finalQuotedValue / (1 + formData.taxRate / 100)) * (formData.taxRate / 100)).toLocaleString('en-AU', {
+                          style: 'currency',
+                          currency: formData.currency
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-bold py-2">
+                      <span>Total:</span>
+                      <span>
+                        {formData.finalQuotedValue.toLocaleString('en-AU', {
+                          style: 'currency',
+                          currency: formData.currency
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-8">
+                  <h3 className="font-bold mb-2">Terms & Conditions</h3>
+                  <p>Payment Terms: {formData.paymentTerms}</p>
+                  <p>Quote valid for {formData.validityPeriod} days</p>
+                  {formData.notes && (
+                    <div className="mt-4">
+                      <h4 className="font-bold">Notes:</h4>
+                      <p>{formData.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          <AlertDialog open={showExportOptions} onOpenChange={setShowExportOptions}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Export Quote</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Choose a format to export your quote
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleExport('excel')}
+                  className="flex items-center"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export to Excel
+                </Button>
+                <Button 
+                  onClick={() => handleExport('pdf')}
+                  className="flex items-center"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to PDF
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          
+          <Button 
+            variant="outline" 
+            type="button" 
+            onClick={() => handleMarkAsSent()}
+            disabled={formData.approvalStatus === 'Sent'}
+            className="flex items-center"
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Mark as Sent
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={() => setShowExportOptions(true)}
+            className="flex items-center"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
+        
+        <div className="space-x-2">
+          <Button variant="outline" onClick={onCancel} type="button">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="flex items-center">
+            <BanknoteIcon className="mr-2 h-4 w-4" />
+            {isSubmitting ? "Creating..." : "Create Quote"}
+          </Button>
+        </div>
       </div>
     </form>
   );
