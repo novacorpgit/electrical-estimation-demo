@@ -205,18 +205,12 @@ export const CreateProjectForm = ({
               <Input id="estimatorHours" name="estimatorHours" type="number" placeholder="Enter estimated hours" value={formData.estimatorHours} onChange={handleChange} min="0" step="0.5" />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="poNumber">Customer PO Number</Label>
-              <Input id="poNumber" name="poNumber" placeholder="Enter PO number" value={formData.poNumber} onChange={handleChange} />
-            </div>
+            
+
+            
 
             <div className="space-y-2">
-              <Label htmlFor="refNumber">Internal Ref Number</Label>
-              <Input id="refNumber" name="refNumber" placeholder="Enter reference number" value={formData.refNumber} onChange={handleChange} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
+              
               <Select value={formData.priority} onValueChange={value => handleSelectChange("priority", value)}>
                 <SelectTrigger id="priority">
                   <SelectValue />
