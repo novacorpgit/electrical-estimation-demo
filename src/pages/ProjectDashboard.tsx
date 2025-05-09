@@ -1,194 +1,198 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Navigation } from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SubProjectsView } from "@/components/SubProjectsView";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy, AlertTriangle, Check, FileText } from "lucide-react";
-import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { PanelboardDashboard } from "@/components/PanelboardDashboard";
 import { NotesPanel } from "@/components/notes/NotesPanel";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, 
+  User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy
+} from 'lucide-react';
 
-// Mock project data - would be fetched from API in a real app
-const getMockProject = (projectId: string) => {
-  // Find the project with the given ID
-  const project = mockProjects.find(p => p.id === projectId);
-  
-  if (!project) {
-    return null;
-  }
-  
-  // Count sub-projects by status
-  const subProjectsByStatus = mockSubProjects
-    .filter(sp => sp.projectId === projectId)
-    .reduce((acc, subProject) => {
-      acc[subProject.status] = (acc[subProject.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-  
-  const totalSubProjects = mockSubProjects.filter(sp => sp.projectId === projectId).length;
-  const completedSubProjects = subProjectsByStatus['Completed'] || 0;
-  const inProgressSubProjects = subProjectsByStatus['In Progress'] || 0;
-  const draftSubProjects = subProjectsByStatus['Draft'] || 0;
-  
-  const progressPercentage = totalSubProjects > 0 
-    ? Math.round((completedSubProjects / totalSubProjects) * 100) 
-    : 0;
-  
-  return {
-    ...project,
-    subProjectStats: {
-      total: totalSubProjects,
-      completed: completedSubProjects,
-      inProgress: inProgressSubProjects,
-      draft: draftSubProjects,
-      progressPercentage
-    }
-  };
-};
-
-// Mocked project data
-const mockProjects = [
-  {
+// Mock project data
+const mockProjects = {
+  "P001": {
     id: "P001",
     projectName: "Building A - Electrical Upgrade",
     clientName: "ABC Construction",
-    clientId: "C001",
+    salesRep: "Alice Smith",
+    address: "123 Main St",
     state: "B",
+    classification: "Direct",
     status: "In Progress",
     startDate: "2025-04-10",
-    endDate: "2025-07-15",
     priority: "High",
+    poNumber: "PO-12345",
+    refNumber: "REF-001",
+    estimatorHours: "24",
     estimatorName: "John Smith",
-    totalValue: 125000,
-    description: "Complete electrical upgrade for Building A, including new panelboards and distribution systems."
+    description: "Complete electrical upgrade for Building A"
   },
-  {
+  "P002": {
     id: "P002",
     projectName: "Office Tower - New Installation",
     clientName: "XYZ Properties",
-    clientId: "C002",
+    salesRep: "Bob Johnson",
+    address: "456 Market Ave",
     state: "S",
+    classification: "Tender",
     status: "Draft",
     startDate: "2025-05-15",
-    endDate: "2025-09-30",
     priority: "Normal",
+    poNumber: "PO-23456",
+    refNumber: "REF-002",
+    estimatorHours: "40",
     estimatorName: "Emily Johnson",
-    totalValue: 250000,
-    description: "New electrical installation for 20-story office tower, including MSB and multiple distribution boards."
+    description: "New electrical installation for office tower"
   },
-];
-
-// Mocked sub-project data
-const mockSubProjects = [
-  {
-    id: "SP001",
-    projectId: "P001",
-    name: "DB-01",
-    quantity: 1,
-    panelType: "DB",
-    formType: "Form 1",
-    installationType: "Indoor",
-    boardRating: "100A",
-    ipRating: "IP54",
-    shortCircuitRating: "10kA",
-    status: "In Progress",
-    lastUpdated: "2025-04-15",
-    progress: 65
-  },
-  {
-    id: "SP002",
-    projectId: "P001",
-    name: "MSB-01",
-    quantity: 1,
-    panelType: "MSB",
-    formType: "Form 4",
-    installationType: "Indoor",
-    boardRating: "1000A",
-    ipRating: "IP54",
-    shortCircuitRating: "50kA",
-    status: "Draft",
-    lastUpdated: "2025-04-12",
-    progress: 30
-  },
-  {
-    id: "SP003",
-    projectId: "P001",
-    name: "PLC-01",
-    quantity: 2,
-    panelType: "Control",
-    formType: "Form 2",
-    installationType: "Indoor",
-    boardRating: "63A",
-    ipRating: "IP55",
-    shortCircuitRating: "10kA",
+  "P003": {
+    id: "P003",
+    projectName: "Hospital Wing - Panel Replacement",
+    clientName: "State Health Department",
+    salesRep: "David Wilson",
+    address: "789 Health Blvd",
+    state: "M",
+    classification: "Direct",
     status: "Completed",
-    lastUpdated: "2025-04-20",
-    progress: 100
+    startDate: "2025-03-01",
+    priority: "Critical",
+    poNumber: "PO-34567",
+    refNumber: "REF-003",
+    estimatorHours: "32",
+    estimatorName: "Michael Brown",
+    description: "Replacement of main electrical panels in hospital wing"
   },
-  {
-    id: "SP004",
-    projectId: "P002",
-    name: "DB-Main",
-    quantity: 1,
-    panelType: "DB",
-    formType: "Form 3B",
-    installationType: "Indoor",
-    boardRating: "630A",
-    ipRating: "IP54",
-    shortCircuitRating: "25kA",
-    status: "Draft",
-    lastUpdated: "2025-05-02",
-    progress: 15
+  "P003-R1": {
+    id: "P003-R1",
+    projectName: "Hospital Wing - Panel Replacement (Revision)",
+    clientName: "State Health Department",
+    salesRep: "David Wilson",
+    address: "789 Health Blvd",
+    state: "M",
+    classification: "Direct",
+    status: "In Progress",
+    startDate: "2025-03-01",
+    priority: "Critical",
+    poNumber: "PO-34567",
+    refNumber: "REF-003",
+    estimatorHours: "32",
+    estimatorName: "Michael Brown",
+    description: "Revision of main electrical panels in hospital wing",
+    originalProjectId: "P003"
   },
-];
+  "P004": {
+    id: "P004",
+    projectName: "Shopping Mall - Main Switchboard",
+    clientName: "Retail Developers Group",
+    salesRep: "Michelle Adams",
+    address: "101 Retail Way",
+    state: "P",
+    classification: "Tender",
+    status: "On Hold",
+    startDate: "2025-06-20",
+    priority: "Normal",
+    poNumber: "PO-45678",
+    refNumber: "REF-004",
+    estimatorHours: "48",
+    estimatorName: "Sarah Wilson",
+    description: "Installation of new main switchboard for shopping mall"
+  }
+};
 
-export const ProjectDashboard = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+const ProjectDashboard = () => {
   const navigate = useNavigate();
+  const { projectId } = useParams();
   const { toast } = useToast();
-  const [project, setProject] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>("sub-projects");
-  const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
-  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showCompletedDialog, setShowCompletedDialog] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  
+  // Get project data based on projectId
+  const project = projectId ? mockProjects[projectId as keyof typeof mockProjects] : null;
+  
+  // Check if this is a completed project
+  const isCompleted = project?.status === "Completed";
+  
+  // Check if this is a revision
+  const isRevision = project?.id.includes("-R");
 
-  const handleQuoteGeneration = (subProjectId: string) => {
-    // Navigate to the quotation page for this sub-project
-    navigate(`/quotation/${projectId}/${subProjectId}`);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "In Progress":
+        return "bg-blue-100 border-blue-200 text-blue-800";
+      case "Completed":
+        return "bg-green-100 border-green-200 text-green-800";
+      case "Draft":
+        return "bg-gray-100 border-gray-200 text-gray-800";
+      case "On Hold":
+        return "bg-yellow-100 border-yellow-200 text-yellow-800";
+      default:
+        return "bg-gray-100 border-gray-200 text-gray-800";
+    }
   };
 
-  const handleDuplicateProject = () => {
-    setShowDuplicateDialog(true);
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High":
+        return "bg-orange-100 border-orange-200 text-orange-800";
+      case "Critical":
+        return "bg-red-100 border-red-200 text-red-800";
+      case "Normal":
+        return "bg-blue-100 border-blue-200 text-blue-800";
+      default:
+        return "bg-gray-100 border-gray-200 text-gray-800";
+    }
+  };
+  
+  const handleBack = () => {
+    navigate('/projects');
   };
 
-  const handleMakeRevision = () => {
-    setShowRevisionDialog(true);
+  const handleEditProject = () => {
+    if (isCompleted) {
+      // For completed projects, show the revision dialog
+      setShowRevisionDialog(true);
+    } else {
+      // Here you would typically navigate to an edit form for the project
+      toast({
+        title: "Edit Project",
+        description: "In a real application, this would open an edit form for the project."
+      });
+    }
   };
-
-  const executeDuplication = () => {
-    // In a real app, we would call an API to duplicate the project
-    toast({
-      title: "Project duplicated",
-      description: "The project has been duplicated successfully",
-    });
-    setShowDuplicateDialog(false);
+  
+  const handleToggleCompleted = () => {
+    if (project) {
+      if (project.status === "Completed") {
+        setShowCompletedDialog(true);
+      } else {
+        // In a real app, we would update the project status in the database
+        toast({
+          title: "Project Completed",
+          description: "Project has been marked as completed.",
+        });
+      }
+    }
   };
-
-  const executeRevision = () => {
+  
+  const handleCreateRevision = () => {
     if (project) {
       // In a real app, we would call an API to create a revision of the project
       const revisionProjectId = `${projectId}-R1`;
@@ -205,6 +209,7 @@ export const ProjectDashboard = () => {
         title: "Project revision created",
         description: `A new revision (${revisionProjectId}) of the project has been created with status set to 'In Progress'`,
       });
+      
       setShowRevisionDialog(false);
       
       // Navigate to the new revision
@@ -212,401 +217,312 @@ export const ProjectDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (!projectId) {
-      navigate('/');
-      toast({
-        title: "Project not found",
-        description: "The project you're looking for doesn't exist.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // In a real app, we would fetch the project data from an API
-    const fetchedProject = getMockProject(projectId);
-    if (!fetchedProject) {
-      navigate('/');
-      toast({
-        title: "Project not found",
-        description: "The project you're looking for doesn't exist.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setProject(fetchedProject);
-    setLoading(false);
-  }, [projectId, navigate, toast]);
-
-  if (loading || !project) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  // If project not found
+  if (!projectId || !project) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
+        <p className="mb-6">The project you are looking for does not exist or has been removed.</p>
+        <Button onClick={() => navigate('/projects')}>Back to Projects</Button>
+      </div>
+    );
   }
-
-  const isCompleted = project.status === "Completed";
-  const isRevision = project.id.includes("-R");
-
-  // Data for the pie chart
-  const chartData = [
-    { name: "Completed", value: project.subProjectStats.completed, color: "#10B981" },
-    { name: "In Progress", value: project.subProjectStats.inProgress, color: "#3B82F6" },
-    { name: "Draft", value: project.subProjectStats.draft, color: "#9CA3AF" }
-  ].filter(item => item.value > 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <Navigation pageTitle={project.projectName} />
       
       <main className="container mx-auto p-4 mt-4">
-        {isCompleted && (
-          <Alert className="mb-6 bg-blue-50 border-blue-200">
-            <Check className="h-5 w-5 text-blue-800" />
-            <AlertDescription className="text-blue-800 font-medium flex justify-between items-center w-full">
-              <span>
-                This project is marked as complete and locked for editing.
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-blue-200 hover:bg-blue-300 text-blue-800 border-blue-300"
-                onClick={handleMakeRevision}
-              >
-                <FileText className="mr-2 h-4 w-4" /> Make a Revision
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {isRevision && (
-          <Alert className="mb-6 bg-amber-50 border-amber-200">
-            <AlertTriangle className="h-5 w-5 text-amber-800" />
-            <AlertDescription className="text-amber-800 font-medium">
-              This is a revision of a completed project. You can make changes to this revision without affecting the original.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/')}>
-                Back to Projects
-              </Button>
-              <h1 className="text-3xl font-bold">{project.projectName}</h1>
-              {isRevision && (
-                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-sm ml-2">
-                  Revision
-                </span>
-              )}
-            </div>
-            <p className="text-gray-500 mt-1">Client: {project.clientName}</p>
-          </div>
-
-          <div className="flex space-x-2">
-            {isCompleted ? (
-              <>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                  onClick={handleMakeRevision}
-                >
-                  <FileText className="h-4 w-4" />
-                  Make a Revision
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">Actions</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleDuplicateProject}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate Project
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.print()}>
-                      Export Project
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleDuplicateProject}
-                >
-                  <Copy className="h-4 w-4" />
-                  Duplicate Project
-                </Button>
-                <Button variant="outline">Export Project</Button>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    // If there are sub-projects available, we'll generate a quote for the first one
-                    const subProjects = mockSubProjects.filter(sp => sp.projectId === projectId);
-                    if (subProjects.length > 0) {
-                      handleQuoteGeneration(subProjects[0].id);
-                    } else {
-                      toast({
-                        title: "No sub-projects found",
-                        description: "Please create a sub-project first before generating a quotation.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  <BanknoteIcon className="h-4 w-4" />
-                  Generate Quotation
-                </Button>
-                <Button variant="default">Edit Project</Button>
-              </>
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
+            className="flex items-center"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back to Projects
+          </Button>
+          
+          <div className="flex items-center space-x-2">
+            {isRevision && (
+              <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                Revision
+              </Badge>
             )}
+            <Badge className={getStatusColor(project.status)}>
+              {project.status}
+            </Badge>
+            <Badge className={getPriorityColor(project.priority)}>
+              {project.priority}
+            </Badge>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Project Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleEditProject}>
+                  Edit Project
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleCompleted}>
+                  {project.status === "Completed" ? "Mark As In Progress" : "Mark As Completed"}
+                </DropdownMenuItem>
+                {project.status === "Completed" && (
+                  <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
+                    Create Revision
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem>
+                  Export Project Data
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600">
+                  Delete Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-4">{project.projectName}</h2>
+                <p className="text-gray-500 mb-4">{project.description}</p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Briefcase className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Customer: <strong>{project.clientName}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Address: <strong>{project.address}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <Tag className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Classification: <strong>{project.classification}</strong></span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Sales Rep: <strong>{project.salesRep}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Estimator: <strong>{project.estimatorName}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Start Date: <strong>{project.startDate}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Estimator Hours: <strong>{project.estimatorHours}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">PO Number: <strong>{project.poNumber}</strong></span>
+                  </div>
+                  <div className="flex items-center">
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm">Ref Number: <strong>{project.refNumber}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {isCompleted && (
+          <div className="mb-6 p-4 border border-amber-200 bg-amber-50 rounded-lg flex items-center justify-between">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
+              <span className="text-amber-800 font-medium">This project is marked as completed and cannot be modified.</span>
+            </div>
+            <Button variant="outline" className="bg-white" onClick={() => setShowRevisionDialog(true)}>
+              <Copy className="h-4 w-4 mr-2" />
+              Create Revision
+            </Button>
+          </div>
+        )}
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>
-            <TabsTrigger value="sub-projects">Sub-Projects</TabsTrigger>
-            <TabsTrigger value="quotes">Quotes</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="subprojects">Sub-Projects</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="sub-projects">
-            <SubProjectsView 
-              projectId={projectId!} 
-              projectName={project.projectName} 
-              isProjectCompleted={isCompleted}
-            />
-          </TabsContent>
-          
-          <TabsContent value="documents">
+          <TabsContent value="overview" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Project Documents</CardTitle>
+                <CardTitle>Project Overview</CardTitle>
+                <CardDescription>A summary of this project's status and details.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Document management functionality will be implemented in a future update.</p>
+                <PanelboardDashboard />
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="quotes">
+          <TabsContent value="subprojects" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Project Quotes</CardTitle>
+                <CardTitle>Sub-Projects</CardTitle>
+                <CardDescription>Manage all sub-projects associated with this project.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Quote management functionality will be implemented in a future update.</p>
+                <SubProjectsView projectId={projectId} isProjectCompleted={isCompleted} />
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="overview" className="space-y-4">
-            {/* Project Overview Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="col-span-2">
-                <CardHeader>
-                  <CardTitle>Project Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Project ID</p>
-                      <p>{project.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Status</p>
-                      <p className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        project.status === "Completed" ? "bg-green-100 text-green-800" :
-                        project.status === "In Progress" ? "bg-blue-100 text-blue-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>{project.status}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Start Date</p>
-                      <p>{project.startDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">End Date</p>
-                      <p>{project.endDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Priority</p>
-                      <p className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        project.priority === "High" ? "bg-orange-100 text-orange-800" :
-                        project.priority === "Critical" ? "bg-red-100 text-red-800" :
-                        "bg-blue-100 text-blue-800"
-                      }`}>{project.priority}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Estimator</p>
-                      <p>{project.estimatorName || "Not assigned"}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <p className="text-sm font-medium text-gray-500 mb-2">Project Description</p>
-                    <p className="text-gray-700">{project.description || "No description provided"}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Value</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">${project.totalValue.toLocaleString()}</div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-500 mb-2">Overall Completion</p>
-                    <div className="flex items-center space-x-2">
-                      <Progress value={project.subProjectStats.progressPercentage} className="h-2" />
-                      <span className="text-sm font-medium">{project.subProjectStats.progressPercentage}%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Project Stats and Chart */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Stats Cards */}
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">Total Sub-Projects</p>
-                      <p className="text-3xl font-bold text-blue-900">{project.subProjectStats.total}</p>
-                    </div>
-                    <div className="bg-blue-200 p-3 rounded-full">
-                      <ChartBar className="h-6 w-6 text-blue-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-green-800">Completed</p>
-                      <p className="text-3xl font-bold text-green-900">{project.subProjectStats.completed}</p>
-                    </div>
-                    <div className="bg-green-200 p-3 rounded-full">
-                      <Calendar className="h-6 w-6 text-green-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">In Progress</p>
-                      <p className="text-3xl font-bold text-amber-900">{project.subProjectStats.inProgress}</p>
-                    </div>
-                    <div className="bg-amber-200 p-3 rounded-full">
-                      <Clock className="h-6 w-6 text-amber-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Status Breakdown Chart */}
+          <TabsContent value="notes" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Status Breakdown</CardTitle>
+                <CardTitle>Notes</CardTitle>
+                <CardDescription>Project notes and comments.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value} sub-projects`, 'Quantity']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center">
-                      <p className="text-gray-500">No data to display</p>
-                    </div>
-                  )}
+                <NotesPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="activity" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Activity Log</CardTitle>
+                <CardDescription>Recent actions and changes to this project.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 text-center text-gray-500">
+                  Activity logging will be implemented in a future update.
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+        
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Financial Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-4 text-center text-gray-500">
+                Financial summary will be implemented in a future update.
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-4 text-center text-gray-500">
+                Project timeline will be implemented in a future update.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
-      
-      {/* Add the NotesPanel component */}
-      <NotesPanel 
-        entityId={projectId || ""} 
-        entityType="project" 
-        entityName={project.projectName}
-      />
 
-      {/* Project Duplication Dialog */}
-      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+      {/* Complete/Uncomplete Dialog */}
+      <Dialog open={showCompletedDialog} onOpenChange={setShowCompletedDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Duplicate Project</DialogTitle>
+            <DialogTitle>Change Project Status</DialogTitle>
             <DialogDescription>
-              Create an exact copy of this project with all its details and sub-projects.
+              Are you sure you want to mark this project as "In Progress"? This will allow modification of project details.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="mb-4">The following will be duplicated:</p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Project details and description</li>
-              <li>All sub-projects and their configurations</li>
-              <li>Panel layouts and specifications</li>
-            </ul>
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-10 w-10 text-yellow-500" />
+              <div>
+                <p className="font-medium">Project is currently marked as Completed</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Changing the status will allow further modifications to the project. All sub-projects will remain unchanged.
+                </p>
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>Cancel</Button>
-            <Button onClick={executeDuplication}>Duplicate Project</Button>
+            <Button variant="outline" onClick={() => setShowCompletedDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                toast({
+                  title: "Project Status Updated",
+                  description: `Project has been marked as "In Progress"`,
+                });
+                setShowCompletedDialog(false);
+              }}
+            >
+              Change to In Progress
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Project Revision Dialog */}
+      
+      {/* Revision Dialog */}
       <Dialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Revision</DialogTitle>
+            <DialogTitle>Create Project Revision</DialogTitle>
             <DialogDescription>
-              Create a new revision of this project that you can edit. The original project will remain unchanged.
+              Creating a revision will make a copy of this project that you can modify.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="mb-4">The new revision will:</p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Contain all the same data as the current project</li>
-              <li>Be marked as "Revision" status</li>
-              <li>Include a reference to the original project</li>
-              <li>Have a new revision suffix (e.g., {projectId}-R1)</li>
-            </ul>
+            <div className="flex items-start space-x-3 mb-4">
+              <ClipboardCheck className="h-10 w-10 text-green-500" />
+              <div>
+                <p className="font-medium">The original project will remain unchanged</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  A new copy will be created with status "In Progress" that you can modify.
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3 mt-4">
+              <div className="flex items-center space-x-2">
+                <Switch id="copy-subprojects" defaultChecked />
+                <Label htmlFor="copy-subprojects">Include sub-projects in revision</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch id="copy-quotes" defaultChecked />
+                <Label htmlFor="copy-quotes">Include quotations</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch id="copy-notes" defaultChecked />
+                <Label htmlFor="copy-notes">Include notes</Label>
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>Cancel</Button>
-            <Button onClick={executeRevision}>Create Revision</Button>
+            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRevision}>
+              Create Revision
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

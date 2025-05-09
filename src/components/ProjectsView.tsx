@@ -68,7 +68,14 @@ const mockProjects = [{
   status: "Completed",
   startDate: "2025-03-01",
   priority: "Critical",
-  estimatorName: "Michael Brown"
+  estimatorName: "Michael Brown",
+  description: "Replacement of main electrical panels in hospital wing",
+  address: "789 Health Blvd",
+  salesRep: "David Wilson",
+  classification: "Direct",
+  poNumber: "PO-34567",
+  refNumber: "REF-003",
+  estimatorHours: "32"
 }, {
   id: "P004",
   projectName: "Shopping Mall - Main Switchboard",
@@ -77,7 +84,14 @@ const mockProjects = [{
   status: "On Hold",
   startDate: "2025-06-20",
   priority: "Normal",
-  estimatorName: "Sarah Wilson"
+  estimatorName: "Sarah Wilson",
+  description: "Installation of new main switchboard for shopping mall",
+  address: "101 Retail Way",
+  salesRep: "Michelle Adams",
+  classification: "Tender",
+  poNumber: "PO-45678",
+  refNumber: "REF-004",
+  estimatorHours: "48"
 }, {
   id: "P005",
   projectName: "Factory Expansion - Distribution Boards",
@@ -86,7 +100,14 @@ const mockProjects = [{
   status: "In Progress",
   startDate: "2025-04-25",
   priority: "High",
-  estimatorName: "Robert Davis"
+  estimatorName: "Robert Davis",
+  description: "Distribution boards for factory expansion project",
+  address: "202 Industrial Park",
+  salesRep: "Thomas Brown",
+  classification: "Direct",
+  poNumber: "PO-56789",
+  refNumber: "REF-005",
+  estimatorHours: "36"
 }];
 
 // Mock clients for dropdown
@@ -342,7 +363,15 @@ export const ProjectsView = () => {
   };
 
   const handleViewProject = (projectId: string) => {
-    navigate(`/project/${projectId}`);
+    // Check if the project is completed
+    const project = mockProjects.find(p => p.id === projectId);
+    if (project && project.status === "Completed") {
+      // For completed projects, show a dialog or directly navigate
+      // Here we'll simulate opening the project in view mode
+      navigate(`/project/${projectId}`);
+    } else {
+      navigate(`/project/${projectId}`);
+    }
   };
 
   // Handle column visibility toggle
