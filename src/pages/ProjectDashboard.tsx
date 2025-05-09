@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -9,9 +8,10 @@ import { SubProjectsView } from "@/components/SubProjectsView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon } from "lucide-react";
+import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy } from "lucide-react";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
 import { NotesPanel } from "@/components/notes/NotesPanel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // Mock project data - would be fetched from API in a real app
 const getMockProject = (projectId: string) => {
@@ -153,12 +153,26 @@ export const ProjectDashboard = () => {
   const { toast } = useToast();
   const [project, setProject] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [activeTab, setActiveTab] = useState<string>("sub-projects");
   const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
   const handleQuoteGeneration = (subProjectId: string) => {
     // Navigate to the quotation page for this sub-project
     navigate(`/quotation/${projectId}/${subProjectId}`);
+  };
+
+  const handleDuplicateProject = () => {
+    setShowDuplicateDialog(true);
+  };
+
+  const executeDuplication = () => {
+    // In a real app, we would call an API to duplicate the project
+    toast({
+      title: "Project duplicated",
+      description: "The project has been duplicated successfully",
+    });
+    setShowDuplicateDialog(false);
   };
 
   useEffect(() => {
@@ -216,6 +230,14 @@ export const ProjectDashboard = () => {
           </div>
 
           <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handleDuplicateProject}
+            >
+              <Copy className="h-4 w-4" />
+              Duplicate Project
+            </Button>
             <Button variant="outline">Export Project</Button>
             <Button 
               variant="outline" 
@@ -243,11 +265,37 @@ export const ProjectDashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="sub-projects">Sub-Projects</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="quotes">Quotes</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="sub-projects">
+            <SubProjectsView projectId={projectId!} projectName={project.projectName} />
+          </TabsContent>
+          
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Documents</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">Document management functionality will be implemented in a future update.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="quotes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Quotes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">Quote management functionality will be implemented in a future update.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="overview" className="space-y-4">
             {/* Project Overview Section */}
@@ -398,32 +446,6 @@ export const ProjectDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
-          <TabsContent value="sub-projects">
-            <SubProjectsView projectId={projectId!} projectName={project.projectName} />
-          </TabsContent>
-          
-          <TabsContent value="documents">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Documents</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">Document management functionality will be implemented in a future update.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="quotes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Quotes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">Quote management functionality will be implemented in a future update.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </main>
       
@@ -433,6 +455,30 @@ export const ProjectDashboard = () => {
         entityType="project" 
         entityName={project.projectName}
       />
+
+      {/* Project Duplication Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicate Project</DialogTitle>
+            <DialogDescription>
+              Create an exact copy of this project with all its details and sub-projects.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">The following will be duplicated:</p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Project details and description</li>
+              <li>All sub-projects and their configurations</li>
+              <li>Panel layouts and specifications</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>Cancel</Button>
+            <Button onClick={executeDuplication}>Duplicate Project</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

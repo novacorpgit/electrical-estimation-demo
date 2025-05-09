@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Edit, Trash2, Eye, Clipboard, LayoutGrid } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Eye, Clipboard, LayoutGrid, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { NotesPanel } from "@/components/notes/NotesPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Mock data for sub-projects
 const mockSubProjects = [
@@ -58,6 +60,14 @@ const mockSubProjects = [
   },
 ];
 
+// Mock data for projects (for duplication target)
+const mockProjects = [
+  { id: "P001", name: "Building A - Electrical Upgrade" },
+  { id: "P002", name: "Office Tower - New Installation" },
+  { id: "P003", name: "Shopping Mall Renovation" },
+  { id: "P004", name: "Hospital Extension" }
+];
+
 interface SubProjectsViewProps {
   projectId: string;
   projectName: string;
@@ -74,6 +84,8 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
   const [activeTab, setActiveTab] = useState("all");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [subProjectToDelete, setSubProjectToDelete] = useState<string | null>(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [targetProjectId, setTargetProjectId] = useState<string>(projectId);
 
   // Filter sub-projects based on search term and active tab
   const filteredSubProjects = mockSubProjects.filter(subProject => {
@@ -128,11 +140,25 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
   const confirmDelete = () => {
     // In a real app, this would be an API call
     toast({
-      title: "Sub-project deleted",
-      description: "The sub-project has been deleted successfully.",
+      title: "Panel deleted",
+      description: "The panel has been deleted successfully.",
     });
     setShowDeleteConfirm(false);
     setSubProjectToDelete(null);
+  };
+
+  const handleDuplicateSubProject = (subProject: any) => {
+    setSelectedSubProject(subProject);
+    setShowDuplicateDialog(true);
+  };
+
+  const executeDuplication = () => {
+    // In a real app, this would be an API call to duplicate the panel
+    toast({
+      title: "Panel duplicated",
+      description: `The panel has been duplicated ${targetProjectId !== projectId ? 'to another project' : 'within this project'}.`,
+    });
+    setShowDuplicateDialog(false);
   };
 
   const handleView2DLayout = (subProject: any) => {
@@ -215,7 +241,7 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 className="pl-9"
-                placeholder="Search sub-projects..."
+                placeholder="Search panels..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -227,18 +253,14 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                 onClick={handleAddSubProject}
               >
                 <Plus className="h-4 w-4" />
-                <span>Add Sub-Project</span>
-              </Button>
-              <Button variant="outline">BOM Management</Button>
-              <Button variant="outline" disabled={selectedSubProjects.length === 0}>
-                Bulk Actions
+                <span>Add Panel</span>
               </Button>
             </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="all">All Sub-Projects</TabsTrigger>
+              <TabsTrigger value="all">All Panels</TabsTrigger>
               <TabsTrigger value="inProgress">In Progress</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
@@ -272,7 +294,7 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                     {filteredSubProjects.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="h-24 text-center text-muted-foreground">
-                          No sub-projects found. Click "Add Sub-Project" to create one.
+                          No panels found. Click "Add Panel" to create one.
                         </td>
                       </tr>
                     ) : (
@@ -330,6 +352,15 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                               <Button 
                                 variant="ghost" 
                                 size="icon"
+                                onClick={() => handleDuplicateSubProject(subProject)}
+                                title="Duplicate"
+                                className="text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
                                 onClick={() => handleView2DLayout(subProject)}
                                 className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                                 title="2D Layout"
@@ -363,10 +394,10 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>
-              {isEditMode ? `Edit Sub-Project: ${selectedSubProject?.name}` : "Add New Sub-Project"}
+              {isEditMode ? `Edit Panel: ${selectedSubProject?.name}` : "Add New Panel"}
             </DialogTitle>
             <DialogDescription>
-              Fill in the details below to {isEditMode ? "update" : "create"} a sub-project.
+              Fill in the details below to {isEditMode ? "update" : "create"} a panel.
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6">
@@ -377,10 +408,10 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                 // In a real app, this would refresh the data
                 setShowAddSubProject(false);
                 toast({
-                  title: isEditMode ? "Sub-project updated" : "Sub-project added",
+                  title: isEditMode ? "Panel updated" : "Panel added",
                   description: isEditMode 
-                    ? `Sub-project ${selectedSubProject?.name} has been updated successfully.` 
-                    : "New sub-project has been added successfully.",
+                    ? `Panel ${selectedSubProject?.name} has been updated successfully.` 
+                    : "New panel has been added successfully.",
                 });
               }}
               initialData={selectedSubProject}
@@ -396,7 +427,7 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the sub-project
+              This action cannot be undone. This will permanently delete the panel
               and all associated data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -411,6 +442,48 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Duplicate Sub-Project Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicate Panel</DialogTitle>
+            <DialogDescription>
+              Create a copy of this panel with all its specifications.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="target-project" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Target Project</label>
+              <Select value={targetProjectId} onValueChange={setTargetProjectId}>
+                <SelectTrigger id="target-project">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockProjects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                      {project.id === projectId ? " (Current)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium">Details to be duplicated:</p>
+              <ul className="list-disc pl-5 space-y-1.5 text-sm">
+                <li>Panel specifications and configurations</li>
+                <li>All components and connections</li>
+                <li>Layout and technical details</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>Cancel</Button>
+            <Button onClick={executeDuplication}>Duplicate Panel</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Add NotesPanel for sub-projects */}
       {selectedSubProject && (
