@@ -1,5 +1,4 @@
-
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,15 @@ import { AgGridReact } from 'ag-grid-react';
 import { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+  ContextMenuCheckboxItem,
+} from "@/components/ui/context-menu";
+import { toast } from "sonner";
 
 // Mock quote data with BOM items
 const mockQuotes: Quote[] = [
@@ -97,6 +105,18 @@ export const QuotesView = () => {
   const [showQuoteDetail, setShowQuoteDetail] = useState(false);
   const [selectedSubProject, setSelectedSubProject] = useState({ id: "", name: "" });
   
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
+    quoteNumber: true,
+    subProjectName: true,
+    currency: true,
+    finalValue: true,
+    bomItems: true,
+    status: true,
+    createdDate: true,
+    id: true,
+  });
+  
   // Filter quotes based on search term and active tab
   const filteredQuotes = useMemo(() => {
     return mockQuotes.filter(quote => {
@@ -120,25 +140,29 @@ export const QuotesView = () => {
       headerName: 'Quote #',
       field: 'quoteNumber',
       resizable: true,
-      width: 150
+      width: 150,
+      editable: true
     },
     {
       headerName: 'Sub-Project',
       field: 'subProjectName',
       resizable: true,
-      width: 200
+      width: 200,
+      editable: true
     },
     {
       headerName: 'Currency',
       field: 'currency',
       resizable: true,
-      width: 120
+      width: 120,
+      editable: true
     },
     {
       headerName: 'Value',
       field: 'finalValue',
       resizable: true,
       width: 150,
+      editable: true,
       valueFormatter: (params: any) => {
         return params.value.toLocaleString('en-AU', { 
           style: 'currency', 
@@ -151,6 +175,7 @@ export const QuotesView = () => {
       field: 'bomItems',
       resizable: true,
       width: 120,
+      editable: false,
       valueFormatter: (params: any) => {
         return `${params.value.length} items`;
       }
@@ -159,13 +184,15 @@ export const QuotesView = () => {
       headerName: 'Status',
       field: 'status',
       resizable: true,
-      width: 150
+      width: 150,
+      editable: true
     },
     {
       headerName: 'Created Date',
       field: 'createdDate',
       resizable: true,
-      width: 150
+      width: 150,
+      editable: true
     },
     {
       headerName: 'Actions',
@@ -174,6 +201,7 @@ export const QuotesView = () => {
       sortable: false,
       filter: false,
       width: 200,
+      editable: false,
       cellRenderer: (params: any) => {
         return `
           <button class="ag-grid-button view-button">View</button>
@@ -189,6 +217,7 @@ export const QuotesView = () => {
     sortable: true,
     filter: true,
     resizable: true,
+    suppressMenu: true, // We'll use our own context menu
   }), []);
 
   // AG Grid Cell Click Event
@@ -235,6 +264,25 @@ export const QuotesView = () => {
     console.log(`Sending quote ${id}`);
   };
 
+  // Cell value changed event handler
+  const onCellValueChanged = useCallback((params: any) => {
+    // In a real app, we would update the data in a database
+    toast.success(`Updated ${params.colDef.headerName} to ${params.newValue}`);
+  }, []);
+
+  // Toggle column visibility function
+  const toggleColumnVisibility = (field: string) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  // Get visible columns for AG Grid
+  const columnDef = useMemo(() => {
+    return columnDefs.filter(col => columnVisibility[col.field as string] !== false);
+  }, [columnDefs, columnVisibility]);
+
   return (
     <div>
       {showQuoteDetail && selectedQuote ? (
@@ -275,17 +323,72 @@ export const QuotesView = () => {
                 </TabsList>
                 
                 <TabsContent value={activeTab} className="mt-4">
-                  <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
-                    <AgGridReact
-                      rowData={filteredQuotes}
-                      columnDefs={columnDefs}
-                      defaultColDef={defaultColDef}
-                      onCellClicked={onCellClicked}
-                      pagination={true}
-                      paginationPageSize={10}
-                      paginationPageSizeSelector={[5, 10, 20, 50]}
-                    />
-                  </div>
+                  <ContextMenu>
+                    <ContextMenuTrigger className="w-full">
+                      <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
+                        <AgGridReact
+                          rowData={filteredQuotes}
+                          columnDefs={columnDef}
+                          defaultColDef={defaultColDef}
+                          onCellClicked={onCellClicked}
+                          onCellValueChanged={onCellValueChanged}
+                          pagination={true}
+                          paginationPageSize={10}
+                          paginationPageSizeSelector={[5, 10, 20, 50]}
+                          singleClickEdit={false}
+                          suppressClickEdit={true}
+                          enableCellTextSelection={true}
+                        />
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem>Refresh Data</ContextMenuItem>
+                      <ContextMenuItem>Export to Excel</ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.quoteNumber} 
+                        onCheckedChange={() => toggleColumnVisibility('quoteNumber')}
+                      >
+                        Show Quote #
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.subProjectName} 
+                        onCheckedChange={() => toggleColumnVisibility('subProjectName')}
+                      >
+                        Show Sub-Project
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.currency} 
+                        onCheckedChange={() => toggleColumnVisibility('currency')}
+                      >
+                        Show Currency
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.finalValue} 
+                        onCheckedChange={() => toggleColumnVisibility('finalValue')}
+                      >
+                        Show Value
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.bomItems} 
+                        onCheckedChange={() => toggleColumnVisibility('bomItems')}
+                      >
+                        Show Items
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.status} 
+                        onCheckedChange={() => toggleColumnVisibility('status')}
+                      >
+                        Show Status
+                      </ContextMenuCheckboxItem>
+                      <ContextMenuCheckboxItem 
+                        checked={columnVisibility.createdDate} 
+                        onCheckedChange={() => toggleColumnVisibility('createdDate')}
+                      >
+                        Show Created Date
+                      </ContextMenuCheckboxItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </TabsContent>
               </Tabs>
             </CardContent>
