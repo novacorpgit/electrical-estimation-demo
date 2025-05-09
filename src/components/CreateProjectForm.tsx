@@ -12,6 +12,7 @@ import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Mock data for sales reps and estimators
 const mockSalesReps = [
@@ -22,11 +23,12 @@ const mockSalesReps = [
 ];
 
 const mockEstimators = [
-  { id: "est1", name: "John Smith" },
-  { id: "est2", name: "Emily Johnson" },
-  { id: "est3", name: "Michael Brown" },
-  { id: "est4", name: "Sarah Wilson" },
-  { id: "est5", name: "Robert Davis" }
+  { id: "est1", name: "John Smith", initials: "JS" },
+  { id: "est2", name: "Emily Johnson", initials: "EJ" },
+  { id: "est3", name: "Michael Brown", initials: "MB" },
+  { id: "est4", name: "Sarah Wilson", initials: "SW" },
+  { id: "est5", name: "Robert Davis", initials: "RD" },
+  { id: "est6", name: "David Jones", initials: "DJ" }
 ];
 
 // Mock client data with contacts
@@ -54,6 +56,15 @@ const mockClients = [
   }
 ];
 
+// Office codes map
+const officeCodes = {
+  "B": "M", // Brisbane office
+  "P": "P", // Perth office
+  "S": "S", // Sydney office
+  "M": "M", // Melbourne office
+  "T": "T"  // Tasmania office
+};
+
 // Types
 type ProjectFormData = {
   projectName: string;
@@ -73,6 +84,7 @@ type ProjectFormData = {
   estimatorId: string; 
   estimationDate: string; 
   contactId: string;
+  quoteNumber: string;
 };
 
 interface CreateProjectFormProps {
@@ -108,7 +120,8 @@ export const CreateProjectForm = ({
     estimatorHours: "",
     estimatorId: "",
     estimationDate: "",
-    contactId: ""
+    contactId: "",
+    quoteNumber: ""
   });
 
   // State for client contacts
@@ -121,6 +134,9 @@ export const CreateProjectForm = ({
     email: "",
     phone: ""
   });
+
+  // Track if the form has required fields filled
+  const [requiredFieldsFilled, setRequiredFieldsFilled] = useState(false);
 
   // Update form data if initialData changes
   useEffect(() => {
@@ -218,6 +234,43 @@ export const CreateProjectForm = ({
     }
   };
   
+  // Generate a quote number based on the specified format
+  const generateQuoteNumber = (): string => {
+    if (!formData.state || !formData.estimatorId) {
+      return "";
+    }
+    
+    const stateCode = formData.state;
+    const year = new Date().getFullYear().toString().slice(-2);
+    const sequentialNumber = Math.floor(1000 + Math.random() * 9000).toString(); // Mock sequential number
+    const officeCode = officeCodes[formData.state as keyof typeof officeCodes] || "M";
+    
+    const selectedEstimator = mockEstimators.find(est => est.id === formData.estimatorId);
+    const estimatorInitials = selectedEstimator ? selectedEstimator.initials : "XX";
+    
+    return `${stateCode}${year}-${sequentialNumber}${officeCode}-${estimatorInitials}`;
+  };
+  
+  // Check if required fields are filled
+  useEffect(() => {
+    const isRequired = 
+      formData.projectName.trim() !== "" && 
+      formData.clientId !== "" && 
+      formData.state !== "" &&
+      formData.address.trim() !== "";
+    
+    setRequiredFieldsFilled(isRequired);
+    
+    // Generate quote number when required fields are filled
+    if (isRequired && formData.estimatorId && formData.quoteNumber === "") {
+      const newQuoteNumber = generateQuoteNumber();
+      setFormData(prev => ({
+        ...prev,
+        quoteNumber: newQuoteNumber
+      }));
+    }
+  }, [formData.projectName, formData.clientId, formData.state, formData.address, formData.estimatorId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -232,6 +285,16 @@ export const CreateProjectForm = ({
       setIsSubmitting(false);
       return;
     }
+    
+    // Make sure we have a quote number
+    if (formData.quoteNumber === "" && formData.estimatorId) {
+      const newQuoteNumber = generateQuoteNumber();
+      setFormData(prev => ({
+        ...prev,
+        quoteNumber: newQuoteNumber
+      }));
+    }
+    
     try {
       // In a real implementation, we'd save to Supabase here
       // For now let's simulate success after a delay
@@ -422,6 +485,26 @@ export const CreateProjectForm = ({
             </div>
           </div>
 
+          {/* Quote Number Display */}
+          {requiredFieldsFilled && formData.estimatorId && (
+            <div className="p-4 border rounded-md bg-muted/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium">Quote Number</h3>
+                  <p className="text-2xl font-mono font-bold mt-1">{formData.quoteNumber || generateQuoteNumber()}</p>
+                </div>
+                {formData.quoteNumber && (
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">
+                    Auto-generated
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                This quote number is automatically generated based on state, year, office, and estimator.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="description">Link</Label>
             <Textarea id="description" name="description" placeholder="Enter project description" value={formData.description} onChange={handleChange} className="min-h-[100px]" />
@@ -442,6 +525,13 @@ export const CreateProjectForm = ({
               <p className="text-green-700">
                 The project will be assigned for estimation on {format(new Date(formData.estimationDate), 'MMMM d, yyyy')}
               </p>
+              
+              {formData.quoteNumber && (
+                <div className="mt-2 pt-2 border-t border-green-200">
+                  <p className="font-medium text-green-800">Quote Number:</p>
+                  <p className="text-xl font-mono font-bold text-green-900">{formData.quoteNumber}</p>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
