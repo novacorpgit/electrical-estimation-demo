@@ -76,30 +76,23 @@
   }
 }
 
-/* AG Grid Custom Styles */
+/* AG Grid Custom Styles - Cleaned and improved */
 .ag-grid-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  margin-right: 4px;
-  color: #1a67d2;
-  font-size: 0.85rem;
-  border-radius: 4px;
+  @apply bg-transparent border-none cursor-pointer py-1 px-3 mr-1 text-blue-600 text-sm rounded-md transition-colors;
 }
 
 .ag-grid-button:hover {
-  background-color: #f3f4f6;
+  @apply bg-gray-100;
 }
 
 .view-button:hover {
-  color: #2563eb;
+  @apply text-blue-700;
 }
 
 .edit-button:hover {
-  color: #047857;
+  @apply text-emerald-700;
 }
 
 .send-button:hover {
-  color: #7c3aed;
+  @apply text-purple-700;
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,32 @@ import { CreateClientForm } from "./CreateClientForm";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
 import { AgGridReact } from 'ag-grid-react';
+import { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
+// Project type for TypeScript
+interface Project {
+  id: string;
+  projectName: string;
+  quoteNumber: string;
+  customer: string;
+  priorityLevel: string;
+  rep: string;
+  description: string;
+  eta: string;
+  hours: number;
+  status: string;
+  reviewedBy: string;
+  clientName: string;
+  state: string;
+  startDate: string;
+  priority: string;
+  estimatorName: string;
+}
+
 // Updated mock project data with fields from image
-const mockProjects = [
+const mockProjects: Project[] = [
   {
     id: "P001",
     projectName: "UTS CB15 STAGE 1",
@@ -111,7 +133,12 @@ const mockProjects = [
 ];
 
 // Mock clients for dropdown
-const mockClients = [
+interface Client {
+  id: string;
+  name: string;
+}
+
+const mockClients: Client[] = [
   { id: "C001", name: "ABC Construction" },
   { id: "C002", name: "XYZ Properties" },
   { id: "C003", name: "State Health Department" },
@@ -128,16 +155,16 @@ export const ProjectsView = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [quickFilterProjectName, setQuickFilterProjectName] = useState("");
   const [quickFilterClientName, setQuickFilterClientName] = useState("");
-  const [filteredQuickResults, setFilteredQuickResults] = useState<any[]>([]);
+  const [filteredQuickResults, setFilteredQuickResults] = useState<Project[]>([]);
   const [showQuickResults, setShowQuickResults] = useState(false);
-  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<any>(null);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<Project | null>(null);
   const [showCreateClient, setShowCreateClient] = useState(false);
-  const [filteredClients, setFilteredClients] = useState<any[]>([]);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [showClientResults, setShowClientResults] = useState(false);
   const [showEstimatorAvailability, setShowEstimatorAvailability] = useState(false);
   const [selectedEstimatorId, setSelectedEstimatorId] = useState<string | null>(null);
   const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
-  const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
+  const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<Project | null>(null);
 
   // Filter projects based on search term and active tab
   const filteredProjects = useMemo(() => {
@@ -158,11 +185,11 @@ export const ProjectsView = () => {
     });
   }, [searchTerm, activeTab, mockProjects]);
 
-  // AG Grid Column Definitions
-  const columnDefs = useMemo(() => [
+  // AG Grid Column Definitions with properly typed fields
+  const columnDefs = useMemo<ColDef<Project>[]>(() => [
     {
       headerName: '',
-      field: 'checkbox',
+      field: 'id',
       width: 70,
       checkboxSelection: true,
       headerCheckboxSelection: true,
@@ -214,9 +241,6 @@ export const ProjectsView = () => {
       field: 'status',
       resizable: true,
       width: 150,
-      cellRenderer: (params: any) => {
-        return `<span>${params.value}</span>`;
-      }
     },
     {
       headerName: 'Reviewed By (over $75K)',
@@ -302,7 +326,7 @@ export const ProjectsView = () => {
   // AG Grid Row Selection Event
   const onSelectionChanged = (event: any) => {
     const selectedRows = event.api.getSelectedRows();
-    setSelectedProjects(selectedRows.map((row: any) => row.id));
+    setSelectedProjects(selectedRows.map((row: Project) => row.id));
   };
 
   // AG Grid Cell Click Event
@@ -509,7 +533,6 @@ export const ProjectsView = () => {
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-4">
-              {/* Replace the Table component with AG Grid */}
               <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
                 <AgGridReact
                   rowData={filteredProjects}
@@ -521,6 +544,7 @@ export const ProjectsView = () => {
                   suppressRowClickSelection={true}
                   pagination={true}
                   paginationPageSize={10}
+                  paginationPageSizeSelector={[5, 10, 20, 50]}
                 />
               </div>
             </TabsContent>

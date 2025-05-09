@@ -9,6 +9,7 @@ import { BomItem, Quote } from "./bom/BomTypes";
 import { QuoteDetailView } from "./QuoteDetailView";
 import { X } from "lucide-react";
 import { AgGridReact } from 'ag-grid-react';
+import { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
@@ -113,8 +114,8 @@ export const QuotesView = () => {
     });
   }, [searchTerm, activeTab]);
   
-  // AG Grid Column Definitions
-  const columnDefs = useMemo(() => [
+  // AG Grid Column Definitions with properly typed fields
+  const columnDefs = useMemo<ColDef<Quote>[]>(() => [
     {
       headerName: 'Quote #',
       field: 'quoteNumber',
@@ -274,7 +275,6 @@ export const QuotesView = () => {
                 </TabsList>
                 
                 <TabsContent value={activeTab} className="mt-4">
-                  {/* Replace the table with AG Grid */}
                   <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
                     <AgGridReact
                       rowData={filteredQuotes}
@@ -283,6 +283,7 @@ export const QuotesView = () => {
                       onCellClicked={onCellClicked}
                       pagination={true}
                       paginationPageSize={10}
+                      paginationPageSizeSelector={[5, 10, 20, 50]}
                     />
                   </div>
                 </TabsContent>
