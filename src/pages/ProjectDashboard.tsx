@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navigation } from "@/components/Navigation";
@@ -8,24 +7,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PanelboardDashboard } from "@/components/PanelboardDashboard";
 import { NotesPanel } from "@/components/notes/NotesPanel";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, 
-  User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy,
-  Download, FileDown
-} from 'lucide-react';
+import { ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy, Download, FileDown } from 'lucide-react';
 
 // Mock project data
 const mockProjects = {
@@ -121,27 +109,29 @@ const mockProjects = {
     quotationStatus: "Draft"
   }
 };
-
 const ProjectDashboard = () => {
   const navigate = useNavigate();
-  const { projectId } = useParams();
-  const { toast } = useToast();
+  const {
+    projectId
+  } = useParams();
+  const {
+    toast
+  } = useToast();
   const [activeTab, setActiveTab] = useState("subprojects");
   const [showCompletedDialog, setShowCompletedDialog] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
-  
+
   // Get project data based on projectId
   const project = projectId ? mockProjects[projectId as keyof typeof mockProjects] : null;
-  
+
   // Check if this is a completed project
   const isCompleted = project?.status === "Completed";
-  
+
   // Check if this is a revision
   const isRevision = project?.id.includes("-R");
-  
+
   // Check if quotation is completed
   const isQuotationComplete = project?.quotationStatus === "Complete";
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "In Progress":
@@ -156,7 +146,6 @@ const ProjectDashboard = () => {
         return "bg-gray-100 border-gray-200 text-gray-800";
     }
   };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "High":
@@ -169,11 +158,9 @@ const ProjectDashboard = () => {
         return "bg-gray-100 border-gray-200 text-gray-800";
     }
   };
-  
   const handleBack = () => {
     navigate('/projects');
   };
-
   const handleEditProject = () => {
     if (isCompleted) {
       // For completed projects, show the revision dialog
@@ -186,7 +173,6 @@ const ProjectDashboard = () => {
       });
     }
   };
-  
   const handleToggleCompleted = () => {
     if (project) {
       if (project.status === "Completed") {
@@ -195,17 +181,16 @@ const ProjectDashboard = () => {
         // In a real app, we would update the project status in the database
         toast({
           title: "Project Completed",
-          description: "Project has been marked as completed.",
+          description: "Project has been marked as completed."
         });
       }
     }
   };
-  
   const handleCreateRevision = () => {
     if (project) {
       // In a real app, we would call an API to create a revision of the project
       const revisionProjectId = `${projectId}-R1`;
-      
+
       // Create a copy of the project with revision status
       // This would normally be done via an API call
       const revisionProject = {
@@ -213,61 +198,48 @@ const ProjectDashboard = () => {
         id: revisionProjectId,
         status: "In Progress"
       };
-      
       toast({
         title: "Project revision created",
-        description: `A new revision (${revisionProjectId}) of the project has been created with status set to 'In Progress'`,
+        description: `A new revision (${revisionProjectId}) of the project has been created with status set to 'In Progress'`
       });
-      
       setShowRevisionDialog(false);
-      
+
       // Navigate to the new revision
       navigate(`/project/${revisionProjectId}`);
     }
   };
-
   const handleDownloadQuotation = () => {
     toast({
       title: "Downloading Quotation",
-      description: `Quotation for ${project?.projectName} is being downloaded.`,
+      description: `Quotation for ${project?.projectName} is being downloaded.`
     });
-    
+
     // In a real app, this would trigger a file download
     // For now we'll just show a toast message
   };
 
   // If project not found
   if (!projectId || !project) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 flex flex-col items-center justify-center">
+    return <div className="min-h-screen bg-gray-50 p-4 flex flex-col items-center justify-center">
         <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
         <p className="mb-6">The project you are looking for does not exist or has been removed.</p>
         <Button onClick={() => navigate('/projects')}>Back to Projects</Button>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       <Navigation pageTitle={project.projectName} />
       
       <main className="container mx-auto p-4 mt-4">
         <div className="flex justify-between items-center mb-6">
-          <Button 
-            variant="outline" 
-            onClick={handleBack}
-            className="flex items-center"
-          >
+          <Button variant="outline" onClick={handleBack} className="flex items-center">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Projects
           </Button>
           
           <div className="flex items-center space-x-2">
-            {isRevision && (
-              <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+            {isRevision && <Badge className="bg-purple-100 text-purple-800 border-purple-200">
                 Revision
-              </Badge>
-            )}
+              </Badge>}
             <Badge className={getStatusColor(project.status)}>
               {project.status}
             </Badge>
@@ -276,17 +248,10 @@ const ProjectDashboard = () => {
             </Badge>
             
             {/* Add download button when quotation is complete */}
-            {isQuotationComplete && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="flex items-center bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                onClick={handleDownloadQuotation}
-              >
+            {isQuotationComplete && <Button variant="outline" size="sm" className="flex items-center bg-green-50 text-green-700 border-green-200 hover:bg-green-100" onClick={handleDownloadQuotation}>
                 <Download className="h-4 w-4 mr-1" />
                 Download Quotation
-              </Button>
-            )}
+              </Button>}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -303,17 +268,13 @@ const ProjectDashboard = () => {
                 <DropdownMenuItem onClick={handleToggleCompleted}>
                   {project.status === "Completed" ? "Mark As In Progress" : "Mark As Completed"}
                 </DropdownMenuItem>
-                {project.status === "Completed" && (
-                  <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
+                {project.status === "Completed" && <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
                     Create Revision
-                  </DropdownMenuItem>
-                )}
-                {isQuotationComplete && (
-                  <DropdownMenuItem onClick={handleDownloadQuotation} className="text-green-700">
+                  </DropdownMenuItem>}
+                {isQuotationComplete && <DropdownMenuItem onClick={handleDownloadQuotation} className="text-green-700">
                     <Download className="h-4 w-4 mr-2" />
                     Download Quotation
-                  </DropdownMenuItem>
-                )}
+                  </DropdownMenuItem>}
                 <DropdownMenuItem>
                   Export Project Data
                 </DropdownMenuItem>
@@ -381,8 +342,7 @@ const ProjectDashboard = () => {
           </CardContent>
         </Card>
         
-        {isCompleted && (
-          <div className="mb-6 p-4 border border-amber-200 bg-amber-50 rounded-lg flex items-center justify-between">
+        {isCompleted && <div className="mb-6 p-4 border border-amber-200 bg-amber-50 rounded-lg flex items-center justify-between">
             <div className="flex items-center">
               <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
               <span className="text-amber-800 font-medium">This project is marked as completed and cannot be modified.</span>
@@ -391,8 +351,7 @@ const ProjectDashboard = () => {
               <Copy className="h-4 w-4 mr-2" />
               Create Revision
             </Button>
-          </div>
-        )}
+          </div>}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>
@@ -401,10 +360,7 @@ const ProjectDashboard = () => {
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             {/* New Download Quotation tab that only shows when quotation is complete */}
-            <TabsTrigger 
-              value="download-quotation"
-              hideTab={!isQuotationComplete}
-            >
+            <TabsTrigger value="download-quotation" hideTab={!isQuotationComplete}>
               Download Quotation
             </TabsTrigger>
             <TabsTrigger value="overview">Project Overview</TabsTrigger>
@@ -417,11 +373,7 @@ const ProjectDashboard = () => {
                 <CardDescription>Manage all sub-projects associated with this project.</CardDescription>
               </CardHeader>
               <CardContent>
-                <SubProjectsView 
-                  projectId={projectId} 
-                  projectName={project.projectName}
-                  isProjectCompleted={isCompleted} 
-                />
+                <SubProjectsView projectId={projectId} projectName={project.projectName} isProjectCompleted={isCompleted} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -433,10 +385,7 @@ const ProjectDashboard = () => {
                 <CardDescription>Project notes and comments.</CardDescription>
               </CardHeader>
               <CardContent>
-                <NotesPanel 
-                  entityId={projectId}
-                  entityType="project"
-                />
+                <NotesPanel entityId={projectId} entityType="project" />
               </CardContent>
             </Card>
           </TabsContent>
@@ -491,37 +440,23 @@ const ProjectDashboard = () => {
                         <span className="text-gray-600">Status:</span>
                         <span className="font-medium text-green-600">Complete</span>
                       </li>
-                      {isRevision && (
-                        <li className="flex justify-between">
+                      {isRevision && <li className="flex justify-between">
                           <span className="text-gray-600">Version:</span>
                           <span className="font-medium">Revision {project.id.split('-R')[1]}</span>
-                        </li>
-                      )}
+                        </li>}
                     </ul>
                   </div>
                   
                   <div className="flex flex-col space-y-3">
-                    <Button 
-                      size="lg" 
-                      className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700"
-                      onClick={handleDownloadQuotation}
-                    >
+                    <Button size="lg" className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700" onClick={handleDownloadQuotation}>
                       <Download className="h-5 w-5 mr-2" />
                       Download Quotation (PDF)
                     </Button>
                     <div className="flex space-x-3">
-                      <Button 
-                        variant="outline" 
-                        className="w-full flex-1" 
-                        onClick={handleDownloadQuotation}
-                      >
+                      <Button variant="outline" className="w-full flex-1" onClick={handleDownloadQuotation}>
                         Download as DOCX
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full flex-1" 
-                        onClick={handleDownloadQuotation}
-                      >
+                      <Button variant="outline" className="w-full flex-1" onClick={handleDownloadQuotation}>
                         Download as XLSX
                       </Button>
                     </div>
@@ -545,25 +480,12 @@ const ProjectDashboard = () => {
         </Tabs>
         
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Financial Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 text-center text-gray-500">
-                Financial summary will be implemented in a future update.
-              </div>
-            </CardContent>
-          </Card>
+          
           
           <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Timeline</CardTitle>
-            </CardHeader>
+            
             <CardContent>
-              <div className="p-4 text-center text-gray-500">
-                Project timeline will be implemented in a future update.
-              </div>
+              
             </CardContent>
           </Card>
         </div>
@@ -593,15 +515,13 @@ const ProjectDashboard = () => {
             <Button variant="outline" onClick={() => setShowCompletedDialog(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={() => {
-                toast({
-                  title: "Project Status Updated",
-                  description: `Project has been marked as "In Progress"`,
-                });
-                setShowCompletedDialog(false);
-              }}
-            >
+            <Button onClick={() => {
+            toast({
+              title: "Project Status Updated",
+              description: `Project has been marked as "In Progress"`
+            });
+            setShowCompletedDialog(false);
+          }}>
               Change to In Progress
             </Button>
           </DialogFooter>
@@ -655,8 +575,6 @@ const ProjectDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default ProjectDashboard;
