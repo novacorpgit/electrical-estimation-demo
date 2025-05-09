@@ -334,7 +334,7 @@ export const ProjectsView = () => {
                         </div>
                       </th>
                       <th className="h-10 px-4 text-left">Project Name</th>
-                      <th className="h-10 px-4 text-left">Client</th>
+                      <th className="h-10 px-4 text-left">Customer</th>
                       <th className="h-10 px-4 text-left">Estimator</th>
                       <th className="h-10 px-4 text-left">State</th>
                       <th className="h-10 px-4 text-left">Status</th>
