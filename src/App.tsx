@@ -13,6 +13,10 @@ import UserManagement from './pages/UserManagement';
 import UserProfile from './pages/UserProfile';
 import QuotationPage from './pages/QuotationPage';
 import BomUploadPage from './pages/BomUploadPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ClientsPage from './pages/ClientsPage';
+import TemplatesPage from './pages/TemplatesPage';
+import QuotesPage from './pages/QuotesPage';
 
 function App() {
   return (
@@ -20,7 +24,12 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/quotes" element={<QuotesPage />} />
           <Route path="/project/:projectId" element={<ProjectDashboard />} />
+          <Route path="/bom" element={<BomManagement />} />
           <Route path="/bom/:subProjectId" element={<BomManagement />} />
           <Route path="/panel-layout/:subProjectId" element={<PanelLayout />} />
           <Route path="/users" element={<UserManagement />} />
