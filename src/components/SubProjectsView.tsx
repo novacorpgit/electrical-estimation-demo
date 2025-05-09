@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -71,9 +70,10 @@ const mockProjects = [
 interface SubProjectsViewProps {
   projectId: string;
   projectName: string;
+  isProjectCompleted?: boolean; // Add this new prop with optional flag
 }
 
-export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps) => {
+export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = false }: SubProjectsViewProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -121,18 +121,42 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
   };
 
   const handleAddSubProject = () => {
+    if (isProjectCompleted) {
+      toast({
+        title: "Cannot modify completed project",
+        description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedSubProject(null);
     setIsEditMode(false);
     setShowAddSubProject(true);
   };
 
   const handleEditSubProject = (subProject: any) => {
+    if (isProjectCompleted) {
+      toast({
+        title: "Cannot modify completed project",
+        description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedSubProject(subProject);
     setIsEditMode(true);
     setShowAddSubProject(true);
   };
 
   const handleDeleteSubProject = (subProjectId: string) => {
+    if (isProjectCompleted) {
+      toast({
+        title: "Cannot modify completed project",
+        description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubProjectToDelete(subProjectId);
     setShowDeleteConfirm(true);
   };
@@ -251,6 +275,7 @@ export const SubProjectsView = ({ projectId, projectName }: SubProjectsViewProps
                 variant="default" 
                 className="flex items-center space-x-2"
                 onClick={handleAddSubProject}
+                disabled={isProjectCompleted}
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Panel</span>
