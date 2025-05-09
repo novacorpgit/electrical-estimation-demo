@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
 
+// Mock data for sales reps and estimators
+const mockSalesReps = [
+  { id: "sr1", name: "Alice Smith" },
+  { id: "sr2", name: "Bob Johnson" },
+  { id: "sr3", name: "Carol Williams" },
+  { id: "sr4", name: "David Brown" }
+];
+
+const mockEstimators = [
+  { id: "est1", name: "John Smith" },
+  { id: "est2", name: "Emily Johnson" },
+  { id: "est3", name: "Michael Brown" },
+  { id: "est4", name: "Sarah Wilson" },
+  { id: "est5", name: "Robert Davis" }
+];
+
 // Types
 type ProjectFormData = {
   projectName: string;
@@ -19,16 +36,16 @@ type ProjectFormData = {
   state: string;
   classification: string;
   startDate: string;
-  poNumber: string;
   refNumber: string;
   priority: string;
   status: string;
   description: string;
   notes: string;
-  estimatorHours: string; // New field
-  estimatorId: string; // Added field for estimator assignment
-  estimationDate: string; // Added field for estimation date
+  estimatorHours: string; 
+  estimatorId: string; 
+  estimationDate: string; 
 };
+
 interface CreateProjectFormProps {
   onCancel: () => void;
   onSuccess?: () => void;
@@ -37,6 +54,7 @@ interface CreateProjectFormProps {
     clientName?: string;
   };
 }
+
 export const CreateProjectForm = ({
   onCancel,
   onSuccess,
@@ -54,7 +72,6 @@ export const CreateProjectForm = ({
     state: "",
     classification: "Direct",
     startDate: "",
-    poNumber: "",
     refNumber: "",
     priority: "Normal",
     status: "Draft",
@@ -62,8 +79,7 @@ export const CreateProjectForm = ({
     notes: "",
     estimatorHours: "",
     estimatorId: "",
-    // New field with empty default
-    estimationDate: "" // New field with empty default
+    estimationDate: ""
   });
 
   // Update form data if initialData changes
@@ -76,7 +92,9 @@ export const CreateProjectForm = ({
       }));
     }
   }, [initialData]);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {
       name,
@@ -87,12 +105,14 @@ export const CreateProjectForm = ({
       [name]: value
     }));
   };
+  
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
+  
   const handleEstimatorSelect = (date: string, estimatorId: string) => {
     setFormData(prev => ({
       ...prev,
@@ -100,6 +120,7 @@ export const CreateProjectForm = ({
       estimatorId: estimatorId
     }));
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -136,6 +157,7 @@ export const CreateProjectForm = ({
       setIsSubmitting(false);
     }
   };
+  
   return <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 mb-4">
@@ -157,7 +179,16 @@ export const CreateProjectForm = ({
 
             <div className="space-y-2">
               <Label htmlFor="salesRep">Sales Rep</Label>
-              <Input id="salesRep" name="salesRep" placeholder="Enter sales rep name" value={formData.salesRep} onChange={handleChange} />
+              <Select value={formData.salesRep} onValueChange={value => handleSelectChange("salesRep", value)}>
+                <SelectTrigger id="salesRep">
+                  <SelectValue placeholder="Select sales rep" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockSalesReps.map(rep => (
+                    <SelectItem key={rep.id} value={rep.id}>{rep.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -206,8 +237,17 @@ export const CreateProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="poNumber">Customer PO Number</Label>
-              <Input id="poNumber" name="poNumber" placeholder="Enter PO number" value={formData.poNumber} onChange={handleChange} />
+              <Label htmlFor="estimatorId">Estimator</Label>
+              <Select value={formData.estimatorId} onValueChange={value => handleSelectChange("estimatorId", value)}>
+                <SelectTrigger id="estimatorId">
+                  <SelectValue placeholder="Select estimator" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockEstimators.map(estimator => (
+                    <SelectItem key={estimator.id} value={estimator.id}>{estimator.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

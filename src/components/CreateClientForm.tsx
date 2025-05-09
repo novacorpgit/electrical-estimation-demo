@@ -5,6 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientInfoForm, ClientInfo } from "@/components/client/ClientInfoForm";
 import { ContactPersonForm, ContactPerson } from "@/components/client/ContactPersonForm";
 
+// Mock data for sales reps
+const mockSalesReps = [
+  { id: "sr1", name: "Alice Smith" },
+  { id: "sr2", name: "Bob Johnson" },
+  { id: "sr3", name: "Carol Williams" },
+  { id: "sr4", name: "David Brown" }
+];
+
 interface CreateClientFormProps {
   onCancel: () => void;
   onSuccess?: () => void;
@@ -114,6 +122,7 @@ export const CreateClientForm = ({ onCancel, onSuccess }: CreateClientFormProps)
         formData={formData}
         onChange={handleChange}
         onSelectChange={handleSelectChange}
+        salesReps={mockSalesReps}
       />
 
       <div className="space-y-4">
