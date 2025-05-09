@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,9 @@ import { QuoteForm } from "./QuoteForm";
 import { BomItem, Quote } from "./bom/BomTypes";
 import { QuoteDetailView } from "./QuoteDetailView";
 import { X } from "lucide-react";
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 // Mock quote data with BOM items
 const mockQuotes: Quote[] = [
@@ -84,83 +88,6 @@ const mockQuotes: Quote[] = [
   }
 ];
 
-// Create a separate component for the Quotes table
-const QuotesTable = ({ 
-  quotes, 
-  onViewQuote, 
-  onEditQuote, 
-  onSendQuote
-}: { 
-  quotes: Quote[], 
-  onViewQuote: (id: string) => void,
-  onEditQuote: (id: string) => void,
-  onSendQuote: (id: string) => void
-}) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Draft": return "bg-gray-100 text-gray-800";
-      case "Pending Approval": return "bg-yellow-100 text-yellow-800";
-      case "Approved": return "bg-green-100 text-green-800";
-      case "Rejected": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-  
-  return (
-    <div className="rounded-md border">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="h-10 px-4 text-left">Quote #</th>
-            <th className="h-10 px-4 text-left">Sub-Project</th>
-            <th className="h-10 px-4 text-left">Currency</th>
-            <th className="h-10 px-4 text-left">Value</th>
-            <th className="h-10 px-4 text-left">Items</th>
-            <th className="h-10 px-4 text-left">Status</th>
-            <th className="h-10 px-4 text-left">Created Date</th>
-            <th className="h-10 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {quotes.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                No quotes found.
-              </td>
-            </tr>
-          ) : (
-            quotes.map((quote) => (
-              <tr key={quote.id} className="border-b hover:bg-muted/50">
-                <td className="p-4 font-medium">{quote.quoteNumber}</td>
-                <td className="p-4">{quote.subProjectName}</td>
-                <td className="p-4">{quote.currency}</td>
-                <td className="p-4">{quote.finalValue.toLocaleString('en-AU', { 
-                  style: 'currency', 
-                  currency: quote.currency 
-                })}</td>
-                <td className="p-4">
-                  <span className="font-medium">{quote.bomItems.length}</span> items
-                </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quote.status)}`}>
-                    {quote.status}
-                  </span>
-                </td>
-                <td className="p-4">{quote.createdDate}</td>
-                <td className="p-4">
-                  <Button variant="ghost" size="sm" onClick={() => onViewQuote(quote.id)}>View</Button>
-                  <Button variant="ghost" size="sm" onClick={() => onEditQuote(quote.id)}>Edit</Button>
-                  <Button variant="ghost" size="sm" onClick={() => onSendQuote(quote.id)}>Send</Button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
 export const QuotesView = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -170,19 +97,112 @@ export const QuotesView = () => {
   const [selectedSubProject, setSelectedSubProject] = useState({ id: "", name: "" });
   
   // Filter quotes based on search term and active tab
-  const filteredQuotes = mockQuotes.filter(quote => {
-    const matchesSearch = 
-      quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quote.subProjectName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === "all") return matchesSearch;
-    if (activeTab === "draft") return matchesSearch && quote.status === "Draft";
-    if (activeTab === "pending") return matchesSearch && quote.status === "Pending Approval";
-    if (activeTab === "approved") return matchesSearch && quote.status === "Approved";
-    if (activeTab === "rejected") return matchesSearch && quote.status === "Rejected";
-    
-    return matchesSearch;
-  });
+  const filteredQuotes = useMemo(() => {
+    return mockQuotes.filter(quote => {
+      const matchesSearch = 
+        quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quote.subProjectName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (activeTab === "all") return matchesSearch;
+      if (activeTab === "draft") return matchesSearch && quote.status === "Draft";
+      if (activeTab === "pending") return matchesSearch && quote.status === "Pending Approval";
+      if (activeTab === "approved") return matchesSearch && quote.status === "Approved";
+      if (activeTab === "rejected") return matchesSearch && quote.status === "Rejected";
+      
+      return matchesSearch;
+    });
+  }, [searchTerm, activeTab]);
+  
+  // AG Grid Column Definitions
+  const columnDefs = useMemo(() => [
+    {
+      headerName: 'Quote #',
+      field: 'quoteNumber',
+      resizable: true,
+      width: 150
+    },
+    {
+      headerName: 'Sub-Project',
+      field: 'subProjectName',
+      resizable: true,
+      width: 200
+    },
+    {
+      headerName: 'Currency',
+      field: 'currency',
+      resizable: true,
+      width: 120
+    },
+    {
+      headerName: 'Value',
+      field: 'finalValue',
+      resizable: true,
+      width: 150,
+      valueFormatter: (params: any) => {
+        return params.value.toLocaleString('en-AU', { 
+          style: 'currency', 
+          currency: params.data.currency 
+        });
+      }
+    },
+    {
+      headerName: 'Items',
+      field: 'bomItems',
+      resizable: true,
+      width: 120,
+      valueFormatter: (params: any) => {
+        return `${params.value.length} items`;
+      }
+    },
+    {
+      headerName: 'Status',
+      field: 'status',
+      resizable: true,
+      width: 150
+    },
+    {
+      headerName: 'Created Date',
+      field: 'createdDate',
+      resizable: true,
+      width: 150
+    },
+    {
+      headerName: 'Actions',
+      field: 'id',
+      resizable: true,
+      sortable: false,
+      filter: false,
+      width: 200,
+      cellRenderer: (params: any) => {
+        return `
+          <button class="ag-grid-button view-button">View</button>
+          <button class="ag-grid-button edit-button">Edit</button>
+          <button class="ag-grid-button send-button">Send</button>
+        `;
+      }
+    }
+  ], []);
+
+  // AG Grid Default Column Definitions
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    filter: true,
+    resizable: true,
+  }), []);
+
+  // AG Grid Cell Click Event
+  const onCellClicked = (params: any) => {
+    if (params.column.colId === 'id') {
+      const classList = params.event.target.classList;
+      if (classList.contains('view-button')) {
+        handleViewQuote(params.data.id);
+      } else if (classList.contains('edit-button')) {
+        handleEditQuote(params.data.id);
+      } else if (classList.contains('send-button')) {
+        handleSendQuote(params.data.id);
+      }
+    }
+  };
   
   const handleCreateQuote = (subProjectId: string, subProjectName: string) => {
     setSelectedSubProject({ id: subProjectId, name: subProjectName });
@@ -254,12 +274,17 @@ export const QuotesView = () => {
                 </TabsList>
                 
                 <TabsContent value={activeTab} className="mt-4">
-                  <QuotesTable 
-                    quotes={filteredQuotes} 
-                    onViewQuote={handleViewQuote}
-                    onEditQuote={handleEditQuote}
-                    onSendQuote={handleSendQuote}
-                  />
+                  {/* Replace the table with AG Grid */}
+                  <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
+                    <AgGridReact
+                      rowData={filteredQuotes}
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      onCellClicked={onCellClicked}
+                      pagination={true}
+                      paginationPageSize={10}
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
             </CardContent>
