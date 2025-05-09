@@ -193,6 +193,14 @@ export const ProjectDashboard = () => {
       // In a real app, we would call an API to create a revision of the project
       const revisionProjectId = `${projectId}-R1`;
       
+      // Create a copy of the project with revision status
+      // This would normally be done via an API call
+      const revisionProject = {
+        ...project,
+        id: revisionProjectId,
+        status: "In Progress"
+      };
+      
       toast({
         title: "Project revision created",
         description: `A new revision (${revisionProjectId}) of the project has been created with status set to 'In Progress'`,

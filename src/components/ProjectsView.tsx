@@ -371,6 +371,14 @@ export const ProjectsView = () => {
       // In a real app, we would make an API call to create a revision
       const revisionProjectId = `${selectedProjectForEdit.id}-R1`;
       
+      // Create a copy of the project with revision status
+      // This would normally be done via an API call
+      const revisionProject = {
+        ...selectedProjectForEdit,
+        id: revisionProjectId,
+        status: "In Progress"
+      };
+      
       toast({
         title: "Project revision created",
         description: `A new revision of ${selectedProjectForEdit.projectName} has been created. You can now edit the revision.`
@@ -378,7 +386,7 @@ export const ProjectsView = () => {
       
       setShowRevisionDialog(false);
       
-      // Here you would typically navigate to the new revision
+      // Navigate to the new revision using the full path
       navigate(`/project/${revisionProjectId}`);
     }
   };
