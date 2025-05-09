@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navigation } from "@/components/Navigation";
@@ -22,7 +23,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { 
   ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, 
-  User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy
+  User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy,
+  Download, FileDown
 } from 'lucide-react';
 
 // Mock project data
@@ -42,7 +44,8 @@ const mockProjects = {
     refNumber: "REF-001",
     estimatorHours: "24",
     estimatorName: "John Smith",
-    description: "Complete electrical upgrade for Building A"
+    description: "Complete electrical upgrade for Building A",
+    quotationStatus: "Draft"
   },
   "P002": {
     id: "P002",
@@ -59,7 +62,8 @@ const mockProjects = {
     refNumber: "REF-002",
     estimatorHours: "40",
     estimatorName: "Emily Johnson",
-    description: "New electrical installation for office tower"
+    description: "New electrical installation for office tower",
+    quotationStatus: "In Review"
   },
   "P003": {
     id: "P003",
@@ -76,7 +80,8 @@ const mockProjects = {
     refNumber: "REF-003",
     estimatorHours: "32",
     estimatorName: "Michael Brown",
-    description: "Replacement of main electrical panels in hospital wing"
+    description: "Replacement of main electrical panels in hospital wing",
+    quotationStatus: "Complete"
   },
   "P003-R1": {
     id: "P003-R1",
@@ -94,7 +99,8 @@ const mockProjects = {
     estimatorHours: "32",
     estimatorName: "Michael Brown",
     description: "Revision of main electrical panels in hospital wing",
-    originalProjectId: "P003"
+    originalProjectId: "P003",
+    quotationStatus: "Complete"
   },
   "P004": {
     id: "P004",
@@ -111,7 +117,8 @@ const mockProjects = {
     refNumber: "REF-004",
     estimatorHours: "48",
     estimatorName: "Sarah Wilson",
-    description: "Installation of new main switchboard for shopping mall"
+    description: "Installation of new main switchboard for shopping mall",
+    quotationStatus: "Draft"
   }
 };
 
@@ -119,7 +126,7 @@ const ProjectDashboard = () => {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("subprojects");
   const [showCompletedDialog, setShowCompletedDialog] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   
@@ -131,6 +138,9 @@ const ProjectDashboard = () => {
   
   // Check if this is a revision
   const isRevision = project?.id.includes("-R");
+  
+  // Check if quotation is completed
+  const isQuotationComplete = project?.quotationStatus === "Complete";
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -216,6 +226,16 @@ const ProjectDashboard = () => {
     }
   };
 
+  const handleDownloadQuotation = () => {
+    toast({
+      title: "Downloading Quotation",
+      description: `Quotation for ${project?.projectName} is being downloaded.`,
+    });
+    
+    // In a real app, this would trigger a file download
+    // For now we'll just show a toast message
+  };
+
   // If project not found
   if (!projectId || !project) {
     return (
@@ -255,6 +275,19 @@ const ProjectDashboard = () => {
               {project.priority}
             </Badge>
             
+            {/* Add download button when quotation is complete */}
+            {isQuotationComplete && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                onClick={handleDownloadQuotation}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download Quotation
+              </Button>
+            )}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -273,6 +306,12 @@ const ProjectDashboard = () => {
                 {project.status === "Completed" && (
                   <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
                     Create Revision
+                  </DropdownMenuItem>
+                )}
+                {isQuotationComplete && (
+                  <DropdownMenuItem onClick={handleDownloadQuotation} className="text-green-700">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Quotation
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem>
@@ -357,23 +396,19 @@ const ProjectDashboard = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+            {/* Reordered tabs - Sub-Projects first, Overview last */}
             <TabsTrigger value="subprojects">Sub-Projects</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
+            {/* New Download Quotation tab that only shows when quotation is complete */}
+            <TabsTrigger 
+              value="download-quotation"
+              hideTab={!isQuotationComplete}
+            >
+              Download Quotation
+            </TabsTrigger>
+            <TabsTrigger value="overview">Project Overview</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="overview" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Overview</CardTitle>
-                <CardDescription>A summary of this project's status and details.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PanelboardDashboard />
-              </CardContent>
-            </Card>
-          </TabsContent>
           
           <TabsContent value="subprojects" className="mt-4">
             <Card>
@@ -382,7 +417,6 @@ const ProjectDashboard = () => {
                 <CardDescription>Manage all sub-projects associated with this project.</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* FIX 1: Add the required projectName prop */}
                 <SubProjectsView 
                   projectId={projectId} 
                   projectName={project.projectName}
@@ -399,7 +433,6 @@ const ProjectDashboard = () => {
                 <CardDescription>Project notes and comments.</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* FIX 2: Add the required entityId and entityType props */}
                 <NotesPanel 
                   entityId={projectId}
                   entityType="project"
@@ -418,6 +451,94 @@ const ProjectDashboard = () => {
                 <div className="p-4 text-center text-gray-500">
                   Activity logging will be implemented in a future update.
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* New Download Quotation tab content */}
+          <TabsContent value="download-quotation" className="mt-4" hideTab={!isQuotationComplete}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Download Quotation</CardTitle>
+                <CardDescription>Export or download the completed quotation for this project.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-6 bg-green-50 border border-green-100 rounded-lg">
+                  <div className="text-center mb-6">
+                    <FileDown className="h-16 w-16 text-green-600 mx-auto mb-3" />
+                    <h3 className="text-xl font-medium text-green-800">Quotation Ready for Download</h3>
+                    <p className="text-green-700 mt-2">
+                      The quotation for this project has been finalized and is ready for download.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-md border border-green-200 mb-6">
+                    <h4 className="font-medium text-green-800 mb-2">Quotation Details:</h4>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex justify-between">
+                        <span className="text-gray-600">Project:</span>
+                        <span className="font-medium">{project.projectName}</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-gray-600">Customer:</span>
+                        <span className="font-medium">{project.clientName}</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-gray-600">Reference:</span>
+                        <span className="font-medium">{project.refNumber}</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <span className="font-medium text-green-600">Complete</span>
+                      </li>
+                      {isRevision && (
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Version:</span>
+                          <span className="font-medium">Revision {project.id.split('-R')[1]}</span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-3">
+                    <Button 
+                      size="lg" 
+                      className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700"
+                      onClick={handleDownloadQuotation}
+                    >
+                      <Download className="h-5 w-5 mr-2" />
+                      Download Quotation (PDF)
+                    </Button>
+                    <div className="flex space-x-3">
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex-1" 
+                        onClick={handleDownloadQuotation}
+                      >
+                        Download as DOCX
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex-1" 
+                        onClick={handleDownloadQuotation}
+                      >
+                        Download as XLSX
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="overview" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Overview</CardTitle>
+                <CardDescription>A summary of this project's status and details.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PanelboardDashboard />
               </CardContent>
             </Card>
           </TabsContent>

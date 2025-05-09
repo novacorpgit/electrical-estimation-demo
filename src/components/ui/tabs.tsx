@@ -21,12 +21,19 @@ const TabsList = React.forwardRef<
 ))
 TabsList.displayName = TabsPrimitive.List.displayName
 
+// Added an optional hideTab prop to conditionally hide tabs
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
     isDisabled?: boolean;
+    hideTab?: boolean;
   }
->(({ className, isDisabled, ...props }, ref) => {
+>(({ className, isDisabled, hideTab, ...props }, ref) => {
+  // Return null if hideTab is true to completely hide the tab
+  if (hideTab) {
+    return null;
+  }
+  
   if (isDisabled) {
     return (
       <div
@@ -55,17 +62,26 @@ TabsTrigger.displayName = "TabsTrigger";
 
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
-    {...props}
-  />
-))
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content> & {
+    hideTab?: boolean;
+  }
+>(({ className, hideTab, ...props }, ref) => {
+  // Return null if hideTab is true
+  if (hideTab) {
+    return null;
+  }
+  
+  return (
+    <TabsPrimitive.Content
+      ref={ref}
+      className={cn(
+        "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
