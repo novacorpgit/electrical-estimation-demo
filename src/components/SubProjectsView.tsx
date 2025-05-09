@@ -14,67 +14,74 @@ import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Mock data for sub-projects
-const mockSubProjects = [
-  {
-    id: "SP001",
-    name: "DB-01",
-    quantity: 1,
-    panelType: "DB",
-    formType: "Form 1",
-    installationType: "Indoor",
-    boardRating: "100A",
-    ipRating: "IP54",
-    shortCircuitRating: "10kA",
-    status: "In Progress",
-    lastUpdated: "2025-04-15",
-    progress: 65
-  },
-  {
-    id: "SP002",
-    name: "MSB-01",
-    quantity: 1,
-    panelType: "MSB",
-    formType: "Form 4",
-    installationType: "Indoor",
-    boardRating: "1000A",
-    ipRating: "IP54",
-    shortCircuitRating: "50kA",
-    status: "Draft",
-    lastUpdated: "2025-04-12",
-    progress: 30
-  },
-  {
-    id: "SP003",
-    name: "PLC-01",
-    quantity: 2,
-    panelType: "Control",
-    formType: "Form 2",
-    installationType: "Indoor",
-    boardRating: "63A",
-    ipRating: "IP55",
-    shortCircuitRating: "10kA",
-    status: "Completed",
-    lastUpdated: "2025-04-20",
-    progress: 100
-  },
-];
+const mockSubProjects = [{
+  id: "SP001",
+  name: "DB-01",
+  quantity: 1,
+  panelType: "DB",
+  formType: "Form 1",
+  installationType: "Indoor",
+  boardRating: "100A",
+  ipRating: "IP54",
+  shortCircuitRating: "10kA",
+  status: "In Progress",
+  lastUpdated: "2025-04-15",
+  progress: 65
+}, {
+  id: "SP002",
+  name: "MSB-01",
+  quantity: 1,
+  panelType: "MSB",
+  formType: "Form 4",
+  installationType: "Indoor",
+  boardRating: "1000A",
+  ipRating: "IP54",
+  shortCircuitRating: "50kA",
+  status: "Draft",
+  lastUpdated: "2025-04-12",
+  progress: 30
+}, {
+  id: "SP003",
+  name: "PLC-01",
+  quantity: 2,
+  panelType: "Control",
+  formType: "Form 2",
+  installationType: "Indoor",
+  boardRating: "63A",
+  ipRating: "IP55",
+  shortCircuitRating: "10kA",
+  status: "Completed",
+  lastUpdated: "2025-04-20",
+  progress: 100
+}];
 
 // Mock data for projects (for duplication target)
-const mockProjects = [
-  { id: "P001", name: "Building A - Electrical Upgrade" },
-  { id: "P002", name: "Office Tower - New Installation" },
-  { id: "P003", name: "Shopping Mall Renovation" },
-  { id: "P004", name: "Hospital Extension" }
-];
-
+const mockProjects = [{
+  id: "P001",
+  name: "Building A - Electrical Upgrade"
+}, {
+  id: "P002",
+  name: "Office Tower - New Installation"
+}, {
+  id: "P003",
+  name: "Shopping Mall Renovation"
+}, {
+  id: "P004",
+  name: "Hospital Extension"
+}];
 interface SubProjectsViewProps {
   projectId: string;
   projectName: string;
   isProjectCompleted?: boolean; // Add this new prop with optional flag
 }
-
-export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = false }: SubProjectsViewProps) => {
-  const { toast } = useToast();
+export const SubProjectsView = ({
+  projectId,
+  projectName,
+  isProjectCompleted = false
+}: SubProjectsViewProps) => {
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddSubProject, setShowAddSubProject] = useState(false);
@@ -89,19 +96,13 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
 
   // Filter sub-projects based on search term and active tab
   const filteredSubProjects = mockSubProjects.filter(subProject => {
-    const matchesSearch = 
-      subProject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subProject.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subProject.panelType.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = subProject.name.toLowerCase().includes(searchTerm.toLowerCase()) || subProject.id.toLowerCase().includes(searchTerm.toLowerCase()) || subProject.panelType.toLowerCase().includes(searchTerm.toLowerCase());
     if (activeTab === "all") return matchesSearch;
     if (activeTab === "inProgress") return matchesSearch && subProject.status === "In Progress";
     if (activeTab === "completed") return matchesSearch && subProject.status === "Completed";
     if (activeTab === "draft") return matchesSearch && subProject.status === "Draft";
-    
     return matchesSearch;
   });
-
   const handleSelectSubProject = (subProjectId: string) => {
     setSelectedSubProjects(prev => {
       if (prev.includes(subProjectId)) {
@@ -111,7 +112,6 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
       }
     });
   };
-
   const handleSelectAll = () => {
     if (selectedSubProjects.length === filteredSubProjects.length) {
       setSelectedSubProjects([]);
@@ -119,13 +119,12 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
       setSelectedSubProjects(filteredSubProjects.map(p => p.id));
     }
   };
-
   const handleAddSubProject = () => {
     if (isProjectCompleted) {
       toast({
         title: "Cannot modify completed project",
         description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -133,13 +132,12 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
     setIsEditMode(false);
     setShowAddSubProject(true);
   };
-
   const handleEditSubProject = (subProject: any) => {
     if (isProjectCompleted) {
       toast({
         title: "Cannot modify completed project",
         description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -147,115 +145,83 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
     setIsEditMode(true);
     setShowAddSubProject(true);
   };
-
   const handleDeleteSubProject = (subProjectId: string) => {
     if (isProjectCompleted) {
       toast({
         title: "Cannot modify completed project",
         description: "This project is marked as complete and cannot be edited. Please create a revision to make changes.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
     setSubProjectToDelete(subProjectId);
     setShowDeleteConfirm(true);
   };
-
   const confirmDelete = () => {
     // In a real app, this would be an API call
     toast({
       title: "Panel deleted",
-      description: "The panel has been deleted successfully.",
+      description: "The panel has been deleted successfully."
     });
     setShowDeleteConfirm(false);
     setSubProjectToDelete(null);
   };
-
   const handleDuplicateSubProject = (subProject: any) => {
     setSelectedSubProject(subProject);
     setShowDuplicateDialog(true);
   };
-
   const executeDuplication = () => {
     // In a real app, this would be an API call to duplicate the panel
     toast({
       title: "Panel duplicated",
-      description: `The panel has been duplicated ${targetProjectId !== projectId ? 'to another project' : 'within this project'}.`,
+      description: `The panel has been duplicated ${targetProjectId !== projectId ? 'to another project' : 'within this project'}.`
     });
     setShowDuplicateDialog(false);
   };
-
   const handleView2DLayout = (subProject: any) => {
-    navigate(`/panel-layout/${subProject.id}`, { 
-      state: { 
+    navigate(`/panel-layout/${subProject.id}`, {
+      state: {
         subProject,
         projectId,
         projectName
       }
     });
   };
-
   const handleManageBom = (subProjectId: string, subProject: any) => {
-    navigate(`/bom/${subProjectId}`, { 
-      state: { 
+    navigate(`/bom/${subProjectId}`, {
+      state: {
         subProject,
         projectId,
         projectName
       }
     });
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "In Progress": return "bg-blue-100 text-blue-800";
-      case "Completed": return "bg-green-100 text-green-800";
-      case "Draft": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "In Progress":
+        return "bg-blue-100 text-blue-800";
+      case "Completed":
+        return "bg-green-100 text-green-800";
+      case "Draft":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
-
   const getProgressColor = (progress: number) => {
     if (progress >= 80) return "bg-green-500";
     if (progress >= 40) return "bg-amber-500";
     return "bg-blue-500";
   };
-
-  return (
-    <div>
+  return <div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-white">
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500">Total Sub-Projects</div>
-            <div className="text-3xl font-bold mt-2">{mockSubProjects.length}</div>
-          </CardContent>
-        </Card>
         
-        <Card className="bg-white">
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500">Completed</div>
-            <div className="text-3xl font-bold mt-2 text-green-600">
-              {mockSubProjects.filter(sp => sp.status === "Completed").length}
-            </div>
-          </CardContent>
-        </Card>
         
-        <Card className="bg-white">
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500">In Progress</div>
-            <div className="text-3xl font-bold mt-2 text-blue-600">
-              {mockSubProjects.filter(sp => sp.status === "In Progress").length}
-            </div>
-          </CardContent>
-        </Card>
         
-        <Card className="bg-white">
-          <CardContent className="pt-6">
-            <div className="text-sm font-medium text-gray-500">Average Progress</div>
-            <div className="text-3xl font-bold mt-2 text-amber-600">
-              {Math.round(mockSubProjects.reduce((acc, sp) => acc + sp.progress, 0) / mockSubProjects.length)}%
-            </div>
-          </CardContent>
-        </Card>
+        
+        
+        
+        
       </div>
 
       <Card className="mb-6">
@@ -263,20 +229,10 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
           <div className="flex justify-between items-center mb-4">
             <div className="relative w-1/3">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                className="pl-9"
-                placeholder="Search panels..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <Input className="pl-9" placeholder="Search panels..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             <div className="space-x-2">
-              <Button 
-                variant="default" 
-                className="flex items-center space-x-2"
-                onClick={handleAddSubProject}
-                disabled={isProjectCompleted}
-              >
+              <Button variant="default" className="flex items-center space-x-2" onClick={handleAddSubProject} disabled={isProjectCompleted}>
                 <Plus className="h-4 w-4" />
                 <span>Add Panel</span>
               </Button>
@@ -298,10 +254,7 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
                     <tr className="border-b bg-muted/50">
                       <th className="h-10 px-4 text-left">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            checked={selectedSubProjects.length === filteredSubProjects.length && filteredSubProjects.length > 0} 
-                            onCheckedChange={handleSelectAll}
-                          />
+                          <Checkbox checked={selectedSubProjects.length === filteredSubProjects.length && filteredSubProjects.length > 0} onCheckedChange={handleSelectAll} />
                           <span>ID</span>
                         </div>
                       </th>
@@ -316,21 +269,14 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubProjects.length === 0 ? (
-                      <tr>
+                    {filteredSubProjects.length === 0 ? <tr>
                         <td colSpan={9} className="h-24 text-center text-muted-foreground">
                           No panels found. Click "Add Panel" to create one.
                         </td>
-                      </tr>
-                    ) : (
-                      filteredSubProjects.map((subProject) => (
-                        <tr key={subProject.id} className="border-b hover:bg-muted/50">
+                      </tr> : filteredSubProjects.map(subProject => <tr key={subProject.id} className="border-b hover:bg-muted/50">
                           <td className="p-4">
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                checked={selectedSubProjects.includes(subProject.id)}
-                                onCheckedChange={() => handleSelectSubProject(subProject.id)}
-                              />
+                              <Checkbox checked={selectedSubProjects.includes(subProject.id)} onCheckedChange={() => handleSelectSubProject(subProject.id)} />
                               <span>{subProject.id}</span>
                             </div>
                           </td>
@@ -346,10 +292,9 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
                           <td className="p-4">
                             <div className="flex items-center space-x-2">
                               <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full ${getProgressColor(subProject.progress)}`} 
-                                  style={{ width: `${subProject.progress}%` }}
-                                ></div>
+                                <div className={`h-full ${getProgressColor(subProject.progress)}`} style={{
+                            width: `${subProject.progress}%`
+                          }}></div>
                               </div>
                               <span>{subProject.progress}%</span>
                             </div>
@@ -357,55 +302,24 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
                           <td className="p-4 text-sm text-gray-500">{subProject.lastUpdated}</td>
                           <td className="p-4">
                             <div className="flex space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleEditSubProject(subProject)}
-                                title="Edit"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleEditSubProject(subProject)} title="Edit">
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleDeleteSubProject(subProject.id)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                title="Delete"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteSubProject(subProject.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleDuplicateSubProject(subProject)}
-                                title="Duplicate"
-                                className="text-purple-500 hover:text-purple-700 hover:bg-purple-50"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleDuplicateSubProject(subProject)} title="Duplicate" className="text-purple-500 hover:text-purple-700 hover:bg-purple-50">
                                 <Copy className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleView2DLayout(subProject)}
-                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                title="2D Layout"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleView2DLayout(subProject)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50" title="2D Layout">
                                 <LayoutGrid className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleManageBom(subProject.id, subProject)}
-                                className="text-green-500 hover:text-green-700 hover:bg-green-50"
-                                title="Create/Manage BOM"
-                              >
+                              <Button variant="ghost" size="icon" onClick={() => handleManageBom(subProject.id, subProject)} className="text-green-500 hover:text-green-700 hover:bg-green-50" title="Create/Manage BOM">
                                 <Clipboard className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>
-                        </tr>
-                      ))
-                    )}
+                        </tr>)}
                   </tbody>
                 </table>
               </div>
@@ -426,22 +340,14 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6">
-            <SubProjectForm 
-              projectId={projectId}
-              onCancel={() => setShowAddSubProject(false)}
-              onSuccess={() => {
-                // In a real app, this would refresh the data
-                setShowAddSubProject(false);
-                toast({
-                  title: isEditMode ? "Panel updated" : "Panel added",
-                  description: isEditMode 
-                    ? `Panel ${selectedSubProject?.name} has been updated successfully.` 
-                    : "New panel has been added successfully.",
-                });
-              }}
-              initialData={selectedSubProject}
-              isEditMode={isEditMode}
-            />
+            <SubProjectForm projectId={projectId} onCancel={() => setShowAddSubProject(false)} onSuccess={() => {
+            // In a real app, this would refresh the data
+            setShowAddSubProject(false);
+            toast({
+              title: isEditMode ? "Panel updated" : "Panel added",
+              description: isEditMode ? `Panel ${selectedSubProject?.name} has been updated successfully.` : "New panel has been added successfully."
+            });
+          }} initialData={selectedSubProject} isEditMode={isEditMode} />
           </div>
         </DialogContent>
       </Dialog>
@@ -458,10 +364,7 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={confirmDelete}
-            >
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={confirmDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -485,12 +388,10 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockProjects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
+                  {mockProjects.map(project => <SelectItem key={project.id} value={project.id}>
                       {project.name}
                       {project.id === projectId ? " (Current)" : ""}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -511,22 +412,9 @@ export const SubProjectsView = ({ projectId, projectName, isProjectCompleted = f
       </Dialog>
 
       {/* Add NotesPanel for sub-projects */}
-      {selectedSubProject && (
-        <NotesPanel 
-          entityId={selectedSubProject.id} 
-          entityType="subProject" 
-          entityName={selectedSubProject.name}
-        />
-      )}
+      {selectedSubProject && <NotesPanel entityId={selectedSubProject.id} entityType="subProject" entityName={selectedSubProject.name} />}
       
       {/* When no sub-project is selected, show project notes */}
-      {!selectedSubProject && (
-        <NotesPanel 
-          entityId={projectId} 
-          entityType="project"
-          entityName={projectName}
-        />
-      )}
-    </div>
-  );
+      {!selectedSubProject && <NotesPanel entityId={projectId} entityType="project" entityName={projectName} />}
+    </div>;
 };
