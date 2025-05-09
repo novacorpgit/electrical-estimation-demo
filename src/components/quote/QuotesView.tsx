@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,28 +135,31 @@ export const QuotesView = () => {
     });
   }, [searchTerm, activeTab]);
   
-  // AG Grid Column Definitions with properly typed fields
+  // AG Grid Column Definitions with properly typed fields - REORDERED to put quote number first
   const columnDefs = useMemo<ColDef<Quote>[]>(() => [
     {
       headerName: 'Quote #',
       field: 'quoteNumber',
       resizable: true,
       width: 150,
-      editable: true
+      editable: true,
+      cellClass: 'editable-cell'
     },
     {
       headerName: 'Sub-Project',
       field: 'subProjectName',
       resizable: true,
       width: 200,
-      editable: true
+      editable: true,
+      cellClass: 'editable-cell'
     },
     {
       headerName: 'Currency',
       field: 'currency',
       resizable: true,
       width: 120,
-      editable: true
+      editable: true,
+      cellClass: 'editable-cell'
     },
     {
       headerName: 'Value',
@@ -163,6 +167,7 @@ export const QuotesView = () => {
       resizable: true,
       width: 150,
       editable: true,
+      cellClass: 'editable-cell',
       valueFormatter: (params: any) => {
         return params.value.toLocaleString('en-AU', { 
           style: 'currency', 
@@ -185,14 +190,16 @@ export const QuotesView = () => {
       field: 'status',
       resizable: true,
       width: 150,
-      editable: true
+      editable: true,
+      cellClass: 'editable-cell'
     },
     {
       headerName: 'Created Date',
       field: 'createdDate',
       resizable: true,
       width: 150,
-      editable: true
+      editable: true,
+      cellClass: 'editable-cell'
     },
     {
       headerName: 'Actions',
@@ -261,7 +268,7 @@ export const QuotesView = () => {
 
   const handleSendQuote = (id: string) => {
     // Mock functionality for sending a quote
-    console.log(`Sending quote ${id}`);
+    toast.success(`Quote ${id} sent successfully!`);
   };
 
   // Cell value changed event handler
@@ -336,7 +343,8 @@ export const QuotesView = () => {
                           paginationPageSize={10}
                           paginationPageSizeSelector={[5, 10, 20, 50]}
                           singleClickEdit={false}
-                          suppressClickEdit={true}
+                          undoRedoCellEditing={true}
+                          enableCellChangeFlash={true}
                           enableCellTextSelection={true}
                         />
                       </div>
