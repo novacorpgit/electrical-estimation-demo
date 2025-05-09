@@ -365,6 +365,24 @@ export const ProjectsView = () => {
     setColumnOrder(newOrder);
   };
 
+  // Add the missing handleMakeRevision function
+  const handleMakeRevision = () => {
+    if (selectedProjectForEdit) {
+      // In a real app, we would make an API call to create a revision
+      const revisionProjectId = `${selectedProjectForEdit.id}-R1`;
+      
+      toast({
+        title: "Project revision created",
+        description: `A new revision of ${selectedProjectForEdit.projectName} has been created. You can now edit the revision.`
+      });
+      
+      setShowRevisionDialog(false);
+      
+      // Here you would typically navigate to the new revision
+      navigate(`/project/${revisionProjectId}`);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
