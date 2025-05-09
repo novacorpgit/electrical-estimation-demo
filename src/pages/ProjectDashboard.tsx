@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navigation } from "@/components/Navigation";
@@ -383,7 +382,12 @@ const ProjectDashboard = () => {
                 <CardDescription>Manage all sub-projects associated with this project.</CardDescription>
               </CardHeader>
               <CardContent>
-                <SubProjectsView projectId={projectId} isProjectCompleted={isCompleted} />
+                {/* FIX 1: Add the required projectName prop */}
+                <SubProjectsView 
+                  projectId={projectId} 
+                  projectName={project.projectName}
+                  isProjectCompleted={isCompleted} 
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -395,7 +399,11 @@ const ProjectDashboard = () => {
                 <CardDescription>Project notes and comments.</CardDescription>
               </CardHeader>
               <CardContent>
-                <NotesPanel />
+                {/* FIX 2: Add the required entityId and entityType props */}
+                <NotesPanel 
+                  entityId={projectId}
+                  entityType="project"
+                />
               </CardContent>
             </Card>
           </TabsContent>
