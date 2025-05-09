@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,11 +8,20 @@ import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Calendar, Clock, User } from "lucide-react";
+import { Search, Plus, Calendar, Clock, User, SlidersHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateClientForm } from "./CreateClientForm";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { ProjectsTable } from "./projects/ProjectsTable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Mocked project data
 const mockProjects = [{
@@ -78,11 +88,10 @@ const mockClients = [{
   id: "C005",
   name: "Industrial Manufacturers"
 }];
+
 export const ProjectsView = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -99,10 +108,31 @@ export const ProjectsView = () => {
   const [selectedEstimatorId, setSelectedEstimatorId] = useState<string | null>(null);
   const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
   const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
+  
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState({
+    id: true,
+    projectName: true,
+    clientName: true,
+    estimatorName: true,
+    state: true,
+    status: true,
+    priority: true,
+    startDate: true,
+    actions: true,
+  });
+
+  // Column order state
+  const [columnOrder, setColumnOrder] = useState([
+    "id", "projectName", "clientName", "estimatorName", "state", "status", "priority", "startDate", "actions"
+  ]);
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
-    const matchesSearch = project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) || project.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || project.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         project.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         project.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
     if (activeTab === "all") return matchesSearch;
     if (activeTab === "inProgress") return matchesSearch && project.status === "In Progress";
     if (activeTab === "completed") return matchesSearch && project.status === "Completed";
@@ -118,11 +148,13 @@ export const ProjectsView = () => {
       setShowQuickResults(false);
       return;
     }
+    
     const results = mockProjects.filter(project => {
       const matchesProjectName = project.projectName.toLowerCase().includes(quickFilterProjectName.toLowerCase());
       const matchesClientName = project.clientName.toLowerCase().includes(quickFilterClientName.toLowerCase());
       return matchesProjectName && (quickFilterClientName.trim() === '' || matchesClientName);
     });
+    
     setFilteredQuickResults(results);
     setShowQuickResults(true);
   }, [quickFilterProjectName, quickFilterClientName]);
@@ -134,10 +166,15 @@ export const ProjectsView = () => {
       setShowClientResults(false);
       return;
     }
-    const results = mockClients.filter(client => client.name.toLowerCase().includes(quickFilterClientName.toLowerCase()));
+    
+    const results = mockClients.filter(client => 
+      client.name.toLowerCase().includes(quickFilterClientName.toLowerCase())
+    );
+    
     setFilteredClients(results);
     setShowClientResults(true);
   }, [quickFilterClientName]);
+
   const handleSelectProject = (projectId: string) => {
     setSelectedProjects(prev => {
       if (prev.includes(projectId)) {
@@ -147,6 +184,7 @@ export const ProjectsView = () => {
       }
     });
   };
+
   const handleSelectAll = () => {
     if (selectedProjects.length === filteredProjects.length) {
       setSelectedProjects([]);
@@ -154,6 +192,7 @@ export const ProjectsView = () => {
       setSelectedProjects(filteredProjects.map(p => p.id));
     }
   };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "In Progress":
@@ -168,6 +207,7 @@ export const ProjectsView = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "High":
@@ -180,18 +220,22 @@ export const ProjectsView = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
   const openCreateProjectWithValues = () => {
     setSelectedProjectForEdit(null);
     setShowCreateProject(true);
   };
+
   const openEditProject = (project: any) => {
     setSelectedProjectForEdit(project);
     setShowCreateProject(true);
   };
+
   const handleCreateClient = () => {
     setShowClientResults(false);
     setShowCreateClient(true);
   };
+
   const handleClientCreated = (clientName: string) => {
     setShowCreateClient(false);
     setQuickFilterClientName(clientName);
@@ -200,14 +244,17 @@ export const ProjectsView = () => {
       description: `Client "${clientName}" has been created successfully.`
     });
   };
+
   const handleAssignEstimator = (project: any) => {
     setSelectedProjectForEstimator(project);
     setShowEstimatorAvailability(true);
   };
+
   const handleEstimatorSelect = (date: string, estimatorId: string) => {
     setSelectedEstimatorDate(date);
     setSelectedEstimatorId(estimatorId);
   };
+
   const confirmEstimatorAssignment = () => {
     if (selectedProjectForEstimator && selectedEstimatorId && selectedEstimatorDate) {
       // In a real app, we would save this to the database
@@ -221,13 +268,35 @@ export const ProjectsView = () => {
       setSelectedProjectForEstimator(null);
     }
   };
+
   const handleViewProject = (projectId: string) => {
     navigate(`/project/${projectId}`);
   };
-  return <div>
+
+  // Handle column visibility toggle
+  const toggleColumnVisibility = (columnId: keyof typeof visibleColumns) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnId]: !prev[columnId]
+    }));
+  };
+
+  // Handle column reordering
+  const handleColumnReorder = (draggedColumn: string, targetColumn: string) => {
+    const newOrder = [...columnOrder];
+    const draggedIndex = newOrder.indexOf(draggedColumn);
+    const targetIndex = newOrder.indexOf(targetColumn);
+    
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedColumn);
+    
+    setColumnOrder(newOrder);
+  };
+
+  return (
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Projects</h2>
-        
       </div>
 
       {/* Quick Project Creation / Search Card */}
@@ -240,43 +309,73 @@ export const ProjectsView = () => {
             <div>
               <label htmlFor="quickProjectName" className="block text-sm font-medium mb-1">Project Name</label>
               <div className="relative">
-                <Input id="quickProjectName" placeholder="Enter project name..." value={quickFilterProjectName} onChange={e => setQuickFilterProjectName(e.target.value)} />
+                <Input 
+                  id="quickProjectName" 
+                  placeholder="Enter project name..." 
+                  value={quickFilterProjectName} 
+                  onChange={e => setQuickFilterProjectName(e.target.value)} 
+                />
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
               </div>
             </div>
             <div>
               <label htmlFor="quickClientName" className="block text-sm font-medium mb-1">Client Name</label>
               <div className="relative">
-                <Input id="quickClientName" placeholder="Enter client name..." value={quickFilterClientName} onChange={e => setQuickFilterClientName(e.target.value)} onFocus={() => {
-                if (quickFilterClientName.trim() !== '') {
-                  setShowClientResults(true);
-                }
-              }} />
+                <Input 
+                  id="quickClientName" 
+                  placeholder="Enter client name..." 
+                  value={quickFilterClientName} 
+                  onChange={e => setQuickFilterClientName(e.target.value)} 
+                  onFocus={() => {
+                    if (quickFilterClientName.trim() !== '') {
+                      setShowClientResults(true);
+                    }
+                  }} 
+                />
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 
                 {/* Client dropdown results */}
-                {showClientResults && <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border">
+                {showClientResults && (
+                  <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border">
                     <ul className="py-1 max-h-60 overflow-auto">
-                      {filteredClients.map(client => <li key={client.id} className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => {
-                    setQuickFilterClientName(client.name);
-                    setShowClientResults(false);
-                  }}>
+                      {filteredClients.map(client => (
+                        <li 
+                          key={client.id} 
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                          onClick={() => {
+                            setQuickFilterClientName(client.name);
+                            setShowClientResults(false);
+                          }}
+                        >
                           {client.name}
-                        </li>)}
-                      {filteredClients.length === 0 && <li className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-blue-600 flex items-center" onClick={handleCreateClient}>
+                        </li>
+                      ))}
+                      {filteredClients.length === 0 && (
+                        <li 
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-blue-600 flex items-center" 
+                          onClick={handleCreateClient}
+                        >
                           <Plus className="h-4 w-4 mr-2" />
                           Create new client "{quickFilterClientName}"
-                        </li>}
+                        </li>
+                      )}
                     </ul>
-                  </div>}
+                  </div>
+                )}
               </div>
             </div>
           </div>
           
-          {showQuickResults && filteredQuickResults.length > 0 && <div className="mt-2 mb-4 p-3 border rounded-md bg-amber-50">
+          {showQuickResults && filteredQuickResults.length > 0 && (
+            <div className="mt-2 mb-4 p-3 border rounded-md bg-amber-50">
               <h3 className="font-medium mb-2">Similar Projects Found:</h3>
               <ul className="space-y-2">
-                {filteredQuickResults.slice(0, 3).map(project => <li key={project.id} className="flex justify-between items-center border-b pb-2 hover:bg-amber-100 cursor-pointer p-2 rounded-md transition-colors" onClick={() => openEditProject(project)}>
+                {filteredQuickResults.slice(0, 3).map(project => (
+                  <li 
+                    key={project.id} 
+                    className="flex justify-between items-center border-b pb-2 hover:bg-amber-100 cursor-pointer p-2 rounded-md transition-colors" 
+                    onClick={() => openEditProject(project)}
+                  >
                     <div>
                       <span className="font-medium">{project.projectName}</span> 
                       <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
@@ -284,12 +383,16 @@ export const ProjectsView = () => {
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
                       {project.status}
                     </span>
-                  </li>)}
-                {filteredQuickResults.length > 3 && <li className="text-sm text-gray-600 italic">
+                  </li>
+                ))}
+                {filteredQuickResults.length > 3 && (
+                  <li className="text-sm text-gray-600 italic">
                     + {filteredQuickResults.length - 3} more projects match your search
-                  </li>}
+                  </li>
+                )}
               </ul>
-            </div>}
+            </div>
+          )}
           
           <div className="flex justify-end">
             <Button onClick={openCreateProjectWithValues}>
@@ -303,13 +406,47 @@ export const ProjectsView = () => {
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-4">
             <div className="w-1/3">
-              <Input placeholder="Search projects..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <Input 
+                placeholder="Search projects..." 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+              />
             </div>
-            <div className="space-x-2">
+            <div className="space-x-2 flex items-center">
               <Button variant="outline">Export</Button>
               <Button variant="outline" disabled={selectedProjects.length === 0}>
                 Bulk Actions
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {Object.entries(visibleColumns).map(([key, value]) => {
+                    // Skip the actions column as it should always be visible
+                    if (key === 'actions') return null;
+                    
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={key}
+                        checked={value}
+                        onCheckedChange={() => toggleColumnVisibility(key as keyof typeof visibleColumns)}
+                      >
+                        {key === 'id' ? 'Quote No' : 
+                         key === 'projectName' ? 'Project Name' : 
+                         key === 'clientName' ? 'Customer' : 
+                         key === 'estimatorName' ? 'Estimator' : 
+                         key === 'state' ? 'State' : 
+                         key === 'status' ? 'Status' : 
+                         key === 'priority' ? 'Priority' : 
+                         key === 'startDate' ? 'Start Date' : key}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -323,108 +460,54 @@ export const ProjectsView = () => {
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-4">
-              <div className="rounded-md border">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="h-10 px-4 text-left">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} />
-                          <span>Quote No</span>
-                        </div>
-                      </th>
-                      <th className="h-10 px-4 text-left">Project Name</th>
-                      <th className="h-10 px-4 text-left">Customer</th>
-                      <th className="h-10 px-4 text-left">Estimator</th>
-                      <th className="h-10 px-4 text-left">State</th>
-                      <th className="h-10 px-4 text-left">Status</th>
-                      <th className="h-10 px-4 text-left">Priority</th>
-                      <th className="h-10 px-4 text-left">Start Date</th>
-                      <th className="h-10 px-4 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProjects.length === 0 ? <tr>
-                        <td colSpan={9} className="h-24 text-center text-muted-foreground">
-                          No projects found.
-                        </td>
-                      </tr> : filteredProjects.map(project => <tr key={project.id} className="border-b hover:bg-muted/50 cursor-pointer" onClick={() => handleViewProject(project.id)}>
-                          <td className="p-4" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={() => handleSelectProject(project.id)} />
-                              <span>{project.id}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 font-medium">{project.projectName}</td>
-                          <td className="p-4">{project.clientName}</td>
-                          <td className="p-4" onClick={e => e.stopPropagation()}>
-                            {project.estimatorName ? <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4 text-gray-500" />
-                                <span>{project.estimatorName}</span>
-                              </div> : <Button variant="outline" size="sm" className="flex items-center space-x-1 text-blue-600" onClick={e => {
-                        e.stopPropagation();
-                        handleAssignEstimator(project);
-                      }}>
-                                <User className="h-4 w-4" />
-                                <span>Assign</span>
-                              </Button>}
-                          </td>
-                          <td className="p-4">{project.state}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
-                              {project.status}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(project.priority)}`}>
-                              {project.priority}
-                            </span>
-                          </td>
-                          <td className="p-4">{project.startDate}</td>
-                          <td className="p-4" onClick={e => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" onClick={e => {
-                        e.stopPropagation();
-                        handleViewProject(project.id);
-                      }}>
-                              View
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={e => {
-                        e.stopPropagation();
-                        openEditProject(project);
-                      }}>
-                              Edit
-                            </Button>
-                          </td>
-                        </tr>)}
-                  </tbody>
-                </table>
-              </div>
+              <DndProvider backend={HTML5Backend}>
+                <ProjectsTable 
+                  projects={filteredProjects}
+                  visibleColumns={visibleColumns}
+                  columnOrder={columnOrder}
+                  selectedProjects={selectedProjects}
+                  onSelectProject={handleSelectProject}
+                  onSelectAll={handleSelectAll}
+                  onViewProject={handleViewProject}
+                  onEditProject={openEditProject}
+                  onAssignEstimator={handleAssignEstimator}
+                  onColumnReorder={handleColumnReorder}
+                  getStatusColor={getStatusColor}
+                  getPriorityColor={getPriorityColor}
+                />
+              </DndProvider>
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
 
-      {showCreateProject && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      {showCreateProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle>{selectedProjectForEdit ? `Edit Project: ${selectedProjectForEdit.projectName}` : 'Create New Project'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <CreateProjectForm onCancel={() => {
-            setShowCreateProject(false);
-            setSelectedProjectForEdit(null);
-          }} onSuccess={() => {
-            setSelectedProjectForEdit(null);
-          }} initialData={selectedProjectForEdit ? {
-            projectName: selectedProjectForEdit.projectName,
-            clientName: selectedProjectForEdit.clientName
-          } : {
-            projectName: quickFilterProjectName,
-            clientName: quickFilterClientName
-          }} />
+              <CreateProjectForm 
+                onCancel={() => {
+                  setShowCreateProject(false);
+                  setSelectedProjectForEdit(null);
+                }} 
+                onSuccess={() => {
+                  setSelectedProjectForEdit(null);
+                }} 
+                initialData={selectedProjectForEdit ? {
+                  projectName: selectedProjectForEdit.projectName,
+                  clientName: selectedProjectForEdit.clientName
+                } : {
+                  projectName: quickFilterProjectName,
+                  clientName: quickFilterClientName
+                }} 
+              />
             </CardContent>
           </Card>
-        </div>}
+        </div>
+      )}
 
       {/* Client Creation Dialog */}
       <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
@@ -432,7 +515,10 @@ export const ProjectsView = () => {
           <DialogHeader>
             <DialogTitle>Create New Client</DialogTitle>
           </DialogHeader>
-          <CreateClientForm onCancel={() => setShowCreateClient(false)} onSuccess={() => handleClientCreated(quickFilterClientName)} />
+          <CreateClientForm 
+            onCancel={() => setShowCreateClient(false)} 
+            onSuccess={() => handleClientCreated(quickFilterClientName)} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -445,9 +531,14 @@ export const ProjectsView = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <EstimatorAvailability onSelectDate={handleEstimatorSelect} selectedDate={selectedEstimatorDate || undefined} selectedEstimatorId={selectedEstimatorId || undefined} />
+            <EstimatorAvailability 
+              onSelectDate={handleEstimatorSelect} 
+              selectedDate={selectedEstimatorDate || undefined} 
+              selectedEstimatorId={selectedEstimatorId || undefined} 
+            />
             
-            {selectedEstimatorId && selectedEstimatorDate && <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+            {selectedEstimatorId && selectedEstimatorDate && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
                 <h3 className="text-lg font-medium text-green-800 flex items-center">
                   <Calendar className="h-5 w-5 mr-2" />
                   Estimator Selected
@@ -456,18 +547,23 @@ export const ProjectsView = () => {
                   <Clock className="h-4 w-4 mr-2" />
                   Scheduled for {format(new Date(selectedEstimatorDate), 'MMMM d, yyyy')}
                 </p>
-              </div>}
+              </div>
+            )}
             
             <div className="flex justify-end space-x-2 mt-6">
               <Button variant="outline" onClick={() => setShowEstimatorAvailability(false)}>
                 Cancel
               </Button>
-              <Button onClick={confirmEstimatorAssignment} disabled={!selectedEstimatorId || !selectedEstimatorDate}>
+              <Button 
+                onClick={confirmEstimatorAssignment} 
+                disabled={!selectedEstimatorId || !selectedEstimatorDate}
+              >
                 Assign Estimator
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
