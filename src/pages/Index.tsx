@@ -2,7 +2,6 @@
 import { PanelboardDashboard } from "@/components/PanelboardDashboard";
 import { ProjectsView } from "@/components/ProjectsView";
 import { ClientsView } from "@/components/ClientsView";
-import { QuotesView } from "@/components/quote/QuotesView";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
