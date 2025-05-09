@@ -368,7 +368,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
               sortedProjects.map(project => (
                 <TableRow 
                   key={project.id} 
-                  className="hover:bg-muted/30 cursor-pointer border-b" 
+                  className={`hover:bg-muted/30 cursor-pointer border-b ${project.status === "Completed" ? "bg-gray-50" : ""}`}
                   onClick={() => onViewProject(project.id)}
                 >
                   {visibleOrderedColumns.map((column) => (

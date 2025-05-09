@@ -1,9 +1,9 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   Printer, 
   Edit,
@@ -48,6 +48,7 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
 }) => {
   const { toast } = useToast();
   const isCompleted = quote.status === "Approved" || quote.status === "Completed";
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,19 +61,30 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
         return "bg-green-100 text-green-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
+      case "Revision":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
   const handleMakeRevision = () => {
+    setShowRevisionDialog(true);
+  };
+  
+  const confirmRevision = () => {
     if (onRevision) {
       onRevision();
     } else {
+      // Create a revision
+      const revisionQuoteNumber = `${quote.quoteNumber}-R1`;
+      
       toast({
-        title: "Feature not yet implemented",
-        description: "The revision feature is coming soon.",
+        title: "Revision created",
+        description: `Created revision ${revisionQuoteNumber} of quote ${quote.quoteNumber}`,
       });
+      
+      setShowRevisionDialog(false);
     }
   };
 
@@ -107,10 +119,29 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
   return (
     <div className="space-y-6">
       {isCompleted && (
-        <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+        <Alert className="bg-blue-50 border-blue-200">
           <Check className="h-5 w-5 text-blue-800" />
-          <AlertDescription className="font-medium">
-            This project is completed. To make changes, click 'Make a Revision' below.
+          <AlertDescription className="flex justify-between items-center w-full">
+            <span className="font-medium text-blue-800">
+              This quote is completed and locked for editing.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-blue-200 hover:bg-blue-300 text-blue-800 border-blue-300"
+              onClick={handleMakeRevision}
+            >
+              <FileText className="mr-2 h-4 w-4" /> Make a Revision
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {quote.quoteNumber.includes("-R") && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-5 w-5 text-amber-800" />
+          <AlertDescription className="font-medium text-amber-800">
+            This is a revision of a completed quote. You can make changes without affecting the original.
           </AlertDescription>
         </Alert>
       )}
@@ -136,7 +167,7 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
                 onClick={handleMakeRevision}
                 className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
               >
-                <Copy className="mr-2 h-4 w-4" />
+                <FileText className="mr-2 h-4 w-4" />
                 Make a Revision
               </Button>
               <Button 
@@ -304,6 +335,36 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Revision Dialog */}
+      <Dialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Quote Revision</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">
+              This quote is marked as {quote.status}. Creating a revision will allow you to make changes while preserving the original.
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-amber-800">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>A new quote will be created with status "Draft"</li>
+                <li>The quote number will be updated to {quote.quoteNumber}-R1</li>
+                <li>All items and details will be copied to the new quote</li>
+                <li>The original quote will remain unchanged</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmRevision}>
+              Create Revision
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

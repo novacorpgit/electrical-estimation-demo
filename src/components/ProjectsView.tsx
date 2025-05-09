@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 
 // Mocked project data with additional fields
 const mockProjects = [{
@@ -126,6 +127,8 @@ export const ProjectsView = () => {
   const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
   const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
   const [selectedQuickProject, setSelectedQuickProject] = useState<any>(null);
+  const [hideCompletedProjects, setHideCompletedProjects] = useState(false);
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   
   // Column visibility state - updated to include all fields from CreateProjectForm
   const [visibleColumns, setVisibleColumns] = useState({
@@ -163,18 +166,23 @@ export const ProjectsView = () => {
     "Actions": ["actions"]
   };
 
-  // Filter projects based on search term and active tab
+  // Filter projects based on search term, active tab, and completed filter
   const filteredProjects = mockProjects.filter(project => {
     const matchesSearch = project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          project.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          project.id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (activeTab === "all") return matchesSearch;
-    if (activeTab === "inProgress") return matchesSearch && project.status === "In Progress";
-    if (activeTab === "completed") return matchesSearch && project.status === "Completed";
-    if (activeTab === "draft") return matchesSearch && project.status === "Draft";
-    if (activeTab === "onHold") return matchesSearch && project.status === "On Hold";
-    return matchesSearch;
+    const matchesTab = 
+      activeTab === "all" ||
+      (activeTab === "inProgress" && project.status === "In Progress") ||
+      (activeTab === "completed" && project.status === "Completed") ||
+      (activeTab === "draft" && project.status === "Draft") ||
+      (activeTab === "onHold" && project.status === "On Hold");
+    
+    // Hide completed projects if the switch is toggled
+    const showBasedOnCompletedFilter = !hideCompletedProjects || project.status !== "Completed";
+    
+    return matchesSearch && matchesTab && showBasedOnCompletedFilter;
   });
 
   // Quick filter effect for projects
@@ -264,9 +272,16 @@ export const ProjectsView = () => {
   };
 
   const openEditProject = (project: any) => {
-    setSelectedProjectForEdit(project);
-    setSelectedQuickProject(null);
-    setShowCreateProject(true);
+    if (project.status === "Completed") {
+      // For completed projects, show the revision dialog instead of directly editing
+      setSelectedProjectForEdit(project);
+      setShowRevisionDialog(true);
+    } else {
+      // For non-completed projects, open the edit form as normal
+      setSelectedProjectForEdit(project);
+      setSelectedQuickProject(null);
+      setShowCreateProject(true);
+    }
   };
   
   const duplicateProject = (project: any) => {
@@ -515,6 +530,16 @@ export const ProjectsView = () => {
               />
             </div>
             <div className="space-x-2 flex items-center">
+              <div className="flex items-center space-x-2 mr-4">
+                <Switch
+                  id="hide-completed"
+                  checked={hideCompletedProjects}
+                  onCheckedChange={setHideCompletedProjects}
+                />
+                <label htmlFor="hide-completed" className="text-sm text-gray-600">
+                  Hide Completed Projects
+                </label>
+              </div>
               <Button variant="outline">Export</Button>
               <Button variant="outline" disabled={selectedProjects.length === 0}>
                 Bulk Actions
@@ -683,6 +708,36 @@ export const ProjectsView = () => {
                 Assign Estimator
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revision Confirmation Dialog */}
+      <Dialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Project Revision</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">
+              This project is marked as complete. Editing it will create a revision copy. 
+              Do you want to continue?
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-amber-800">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>A new project copy will be created with status "Revision"</li>
+                <li>The original project will remain unchanged</li>
+                <li>You will be redirected to edit the new revision</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleMakeRevision}>
+              Create Revision
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

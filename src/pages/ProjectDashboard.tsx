@@ -8,7 +8,7 @@ import { SubProjectsView } from "@/components/SubProjectsView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy, AlertTriangle, Check } from "lucide-react";
+import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy, AlertTriangle, Check, FileText } from "lucide-react";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -189,12 +189,19 @@ export const ProjectDashboard = () => {
   };
 
   const executeRevision = () => {
-    // In a real app, we would call an API to create a revision of the project
-    toast({
-      title: "Project revision created",
-      description: "A new revision of the project has been created with status set to 'In Progress'",
-    });
-    setShowRevisionDialog(false);
+    if (project) {
+      // In a real app, we would call an API to create a revision of the project
+      const revisionProjectId = `${projectId}-R1`;
+      
+      toast({
+        title: "Project revision created",
+        description: `A new revision (${revisionProjectId}) of the project has been created with status set to 'In Progress'`,
+      });
+      setShowRevisionDialog(false);
+      
+      // Navigate to the new revision
+      navigate(`/project/${revisionProjectId}`);
+    }
   };
 
   useEffect(() => {
@@ -229,6 +236,7 @@ export const ProjectDashboard = () => {
   }
 
   const isCompleted = project.status === "Completed";
+  const isRevision = project.id.includes("-R");
 
   // Data for the pie chart
   const chartData = [
@@ -245,8 +253,27 @@ export const ProjectDashboard = () => {
         {isCompleted && (
           <Alert className="mb-6 bg-blue-50 border-blue-200">
             <Check className="h-5 w-5 text-blue-800" />
-            <AlertDescription className="text-blue-800 font-medium">
-              This project is marked as complete and cannot be edited. To make changes, please create a revision.
+            <AlertDescription className="text-blue-800 font-medium flex justify-between items-center w-full">
+              <span>
+                This project is marked as complete and locked for editing.
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-blue-200 hover:bg-blue-300 text-blue-800 border-blue-300"
+                onClick={handleMakeRevision}
+              >
+                <FileText className="mr-2 h-4 w-4" /> Make a Revision
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isRevision && (
+          <Alert className="mb-6 bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-5 w-5 text-amber-800" />
+            <AlertDescription className="text-amber-800 font-medium">
+              This is a revision of a completed project. You can make changes to this revision without affecting the original.
             </AlertDescription>
           </Alert>
         )}
@@ -258,6 +285,11 @@ export const ProjectDashboard = () => {
                 Back to Projects
               </Button>
               <h1 className="text-3xl font-bold">{project.projectName}</h1>
+              {isRevision && (
+                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-sm ml-2">
+                  Revision
+                </span>
+              )}
             </div>
             <p className="text-gray-500 mt-1">Client: {project.clientName}</p>
           </div>
@@ -270,7 +302,7 @@ export const ProjectDashboard = () => {
                   className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                   onClick={handleMakeRevision}
                 >
-                  <Copy className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   Make a Revision
                 </Button>
                 <DropdownMenu>
@@ -559,9 +591,9 @@ export const ProjectDashboard = () => {
             <p className="mb-4">The new revision will:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Contain all the same data as the current project</li>
-              <li>Be marked as "In Progress" status</li>
+              <li>Be marked as "Revision" status</li>
               <li>Include a reference to the original project</li>
-              <li>Have a new revision number</li>
+              <li>Have a new revision suffix (e.g., {projectId}-R1)</li>
             </ul>
           </div>
           <DialogFooter>
