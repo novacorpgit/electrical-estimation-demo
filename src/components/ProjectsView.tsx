@@ -21,27 +21,43 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-// Mocked project data
+// Mocked project data with additional fields
 const mockProjects = [{
   id: "P001",
   projectName: "Building A - Electrical Upgrade",
   clientName: "ABC Construction",
+  salesRep: "Alice Smith",
+  address: "123 Main St",
   state: "B",
+  classification: "Direct",
   status: "In Progress",
   startDate: "2025-04-10",
   priority: "High",
-  estimatorName: "John Smith"
+  poNumber: "PO-12345",
+  refNumber: "REF-001",
+  estimatorHours: "24",
+  estimatorName: "John Smith",
+  description: "Complete electrical upgrade for Building A"
 }, {
   id: "P002",
   projectName: "Office Tower - New Installation",
   clientName: "XYZ Properties",
+  salesRep: "Bob Johnson",
+  address: "456 Market Ave",
   state: "S",
+  classification: "Tender",
   status: "Draft",
   startDate: "2025-05-15",
   priority: "Normal",
-  estimatorName: "Emily Johnson"
+  poNumber: "PO-23456",
+  refNumber: "REF-002",
+  estimatorHours: "40",
+  estimatorName: "Emily Johnson",
+  description: "New electrical installation for office tower"
 }, {
   id: "P003",
   projectName: "Hospital Wing - Panel Replacement",
@@ -110,23 +126,41 @@ export const ProjectsView = () => {
   const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
   const [selectedQuickProject, setSelectedQuickProject] = useState<any>(null);
   
-  // Column visibility state
+  // Column visibility state - updated to include all fields from CreateProjectForm
   const [visibleColumns, setVisibleColumns] = useState({
     id: true,
     projectName: true,
     clientName: true,
+    salesRep: false,
+    address: false,
     estimatorName: true,
     state: true,
+    classification: false,
     status: true,
     priority: true,
     startDate: true,
+    poNumber: false,
+    refNumber: false,
+    estimatorHours: false,
     actions: true,
   });
 
-  // Column order state
+  // Column order state - updated to include all fields
   const [columnOrder, setColumnOrder] = useState([
-    "id", "projectName", "clientName", "estimatorName", "state", "status", "priority", "startDate", "actions"
+    "id", "projectName", "clientName", "salesRep", "address", "estimatorName", 
+    "state", "classification", "status", "priority", "startDate", 
+    "poNumber", "refNumber", "estimatorHours", "actions"
   ]);
+
+  // Group columns by category for the dropdown menu
+  const columnGroups = {
+    "Basic Info": ["id", "projectName", "clientName", "status", "priority"],
+    "Location": ["state", "address"],
+    "People": ["salesRep", "estimatorName"],
+    "Dates & Schedule": ["startDate", "estimatorHours"],
+    "References": ["poNumber", "refNumber", "classification"],
+    "Actions": ["actions"]
+  };
 
   // Filter projects based on search term and active tab
   const filteredProjects = mockProjects.filter(project => {
@@ -491,27 +525,46 @@ export const ProjectsView = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {Object.entries(visibleColumns).map(([key, value]) => {
-                    // Skip the actions column as it should always be visible
-                    if (key === 'actions') return null;
-                    
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={key}
-                        checked={value}
-                        onCheckedChange={() => toggleColumnVisibility(key as keyof typeof visibleColumns)}
-                      >
-                        {key === 'id' ? 'Quote No' : 
-                         key === 'projectName' ? 'Project Name' : 
-                         key === 'clientName' ? 'Customer' : 
-                         key === 'estimatorName' ? 'Estimator' : 
-                         key === 'state' ? 'State' : 
-                         key === 'status' ? 'Status' : 
-                         key === 'priority' ? 'Priority' : 
-                         key === 'startDate' ? 'Start Date' : key}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
+                  <DropdownMenuLabel>Column Visibility</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {Object.entries(columnGroups).map(([group, columnIds]) => (
+                    <React.Fragment key={group}>
+                      <DropdownMenuLabel className="text-xs text-gray-500 py-1">{group}</DropdownMenuLabel>
+                      {columnIds.map(columnId => {
+                        // Skip the actions column as it should always be visible
+                        if (columnId === 'actions') return null;
+                        
+                        const columnLabels: Record<string, string> = {
+                          'id': 'Quote No',
+                          'projectName': 'Project Name',
+                          'clientName': 'Customer',
+                          'salesRep': 'Sales Rep',
+                          'estimatorName': 'Estimator',
+                          'address': 'Address',
+                          'state': 'State',
+                          'classification': 'Classification',
+                          'status': 'Status',
+                          'priority': 'Priority',
+                          'startDate': 'Start Date',
+                          'poNumber': 'PO Number',
+                          'refNumber': 'Ref Number',
+                          'estimatorHours': 'Est. Hours'
+                        };
+                        
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={columnId}
+                            checked={visibleColumns[columnId as keyof typeof visibleColumns]}
+                            onCheckedChange={() => toggleColumnVisibility(columnId as keyof typeof visibleColumns)}
+                          >
+                            {columnLabels[columnId] || columnId}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                      <DropdownMenuSeparator />
+                    </React.Fragment>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

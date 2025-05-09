@@ -5,6 +5,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
 import { ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHead,
+  TableRow
+} from "@/components/ui/table";
 
 // Define column type
 type TableColumn = {
@@ -67,12 +75,12 @@ const DraggableColumnHeader = ({
   const isSorted = sortColumn === column.id;
 
   return (
-    <th
+    <TableHead
       ref={(node) => drag(drop(node))}
-      className={`h-10 px-4 text-left ${isDragging ? 'opacity-50' : ''} ${isOver ? 'bg-gray-100' : ''} cursor-move`}
+      className={`h-7 px-2 text-left text-xs ${isDragging ? 'opacity-50' : ''} ${isOver ? 'bg-gray-100' : ''} cursor-move whitespace-nowrap`}
     >
       <div className="flex items-center space-x-1">
-        <span>{column.header}</span>
+        <span className="text-xs font-medium">{column.header}</span>
         {column.enableSorting && (
           <button
             onClick={(e) => {
@@ -83,19 +91,19 @@ const DraggableColumnHeader = ({
           >
             {isSorted ? (
               sortDirection === 'asc' ? (
-                <ArrowUp className="h-4 w-4" />
+                <ArrowUp className="h-3 w-3" />
               ) : (
-                <ArrowDown className="h-4 w-4" />
+                <ArrowDown className="h-3 w-3" />
               )
             ) : (
-              <div className="h-4 w-4 opacity-0 group-hover:opacity-50">
-                <ArrowUp className="h-4 w-4" />
+              <div className="h-3 w-3 opacity-0 group-hover:opacity-50">
+                <ArrowUp className="h-3 w-3" />
               </div>
             )}
           </button>
         )}
       </div>
-    </th>
+    </TableHead>
   );
 };
 
@@ -142,13 +150,14 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       accessorKey: 'id',
       enableSorting: true,
       cell: (project) => (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           <Checkbox 
             checked={selectedProjects.includes(project.id)} 
             onCheckedChange={() => onSelectProject(project.id)}
             onClick={(e) => e.stopPropagation()}
+            className="h-3 w-3"
           />
-          <span>{project.id}</span>
+          <span className="text-xs">{project.id}</span>
         </div>
       )
     },
@@ -157,14 +166,28 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Project Name',
       accessorKey: 'projectName',
       enableSorting: true,
-      cell: (project) => <span className="font-medium">{project.projectName}</span>
+      cell: (project) => <span className="text-xs font-medium">{project.projectName}</span>
     },
     {
       id: 'clientName',
       header: 'Customer',
       accessorKey: 'clientName',
       enableSorting: true,
-      cell: (project) => <span>{project.clientName}</span>
+      cell: (project) => <span className="text-xs">{project.clientName}</span>
+    },
+    {
+      id: 'salesRep',
+      header: 'Sales Rep',
+      accessorKey: 'salesRep',
+      enableSorting: true,
+      cell: (project) => <span className="text-xs">{project.salesRep || '-'}</span>
+    },
+    {
+      id: 'address',
+      header: 'Address',
+      accessorKey: 'address',
+      enableSorting: true,
+      cell: (project) => <span className="text-xs">{project.address || '-'}</span>
     },
     {
       id: 'estimatorName',
@@ -174,21 +197,21 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       cell: (project) => (
         <div onClick={(e) => e.stopPropagation()}>
           {project.estimatorName ? (
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-gray-500" />
-              <span>{project.estimatorName}</span>
+            <div className="flex items-center space-x-1">
+              <User className="h-3 w-3 text-gray-500" />
+              <span className="text-xs">{project.estimatorName}</span>
             </div>
           ) : (
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex items-center space-x-1 text-blue-600" 
+              className="flex items-center space-x-1 text-blue-600 h-5 text-xs py-0 px-1" 
               onClick={(e) => {
                 e.stopPropagation();
                 onAssignEstimator(project);
               }}
             >
-              <User className="h-4 w-4" />
+              <User className="h-3 w-3" />
               <span>Assign</span>
             </Button>
           )}
@@ -200,18 +223,35 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'State',
       accessorKey: 'state',
       enableSorting: true,
-      cell: (project) => <span>{project.state}</span>
+      cell: (project) => <span className="text-xs">{project.state}</span>
     },
     {
-      id: 'status',
-      header: 'Status',
-      accessorKey: 'status',
+      id: 'classification',
+      header: 'Classification',
+      accessorKey: 'classification',
       enableSorting: true,
-      cell: (project) => (
-        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
-          {project.status}
-        </span>
-      )
+      cell: (project) => <span className="text-xs">{project.classification || '-'}</span>
+    },
+    {
+      id: 'startDate',
+      header: 'Start Date',
+      accessorKey: 'startDate',
+      enableSorting: true,
+      cell: (project) => <span className="text-xs">{project.startDate}</span>
+    },
+    {
+      id: 'poNumber',
+      header: 'PO Number',
+      accessorKey: 'poNumber',
+      enableSorting: true,
+      cell: (project) => <span className="text-xs">{project.poNumber || '-'}</span>
+    },
+    {
+      id: 'refNumber',
+      header: 'Ref Number',
+      accessorKey: 'refNumber',
+      enableSorting: true,
+      cell: (project) => <span className="text-xs">{project.refNumber || '-'}</span>
     },
     {
       id: 'priority',
@@ -219,17 +259,28 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       accessorKey: 'priority',
       enableSorting: true,
       cell: (project) => (
-        <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(project.priority)}`}>
+        <span className={`px-1 py-0.5 rounded text-xs font-medium ${getPriorityColor(project.priority)}`}>
           {project.priority}
         </span>
       )
     },
     {
-      id: 'startDate',
-      header: 'Start Date',
-      accessorKey: 'startDate',
+      id: 'estimatorHours',
+      header: 'Est. Hours',
+      accessorKey: 'estimatorHours',
       enableSorting: true,
-      cell: (project) => <span>{project.startDate}</span>
+      cell: (project) => <span className="text-xs">{project.estimatorHours || '-'}</span>
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessorKey: 'status',
+      enableSorting: true,
+      cell: (project) => (
+        <span className={`px-1 py-0.5 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
+          {project.status}
+        </span>
+      )
     },
     {
       id: 'actions',
@@ -241,6 +292,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
+            className="h-6 py-0 px-2 text-xs"
             onClick={(e) => {
               e.stopPropagation();
               onViewProject(project.id);
@@ -250,7 +302,8 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
           </Button>
           <Button 
             variant="ghost" 
-            size="sm" 
+            size="sm"
+            className="h-6 py-0 px-2 text-xs" 
             onClick={(e) => {
               e.stopPropagation();
               onEditProject(project);
@@ -288,45 +341,47 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
 
   return (
     <div className="rounded-md border overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            {visibleOrderedColumns.map((column) => (
-              <DraggableColumnHeader 
-                key={column.id} 
-                column={column} 
-                onColumnReorder={onColumnReorder}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedProjects.length === 0 ? (
-            <tr>
-              <td colSpan={visibleOrderedColumns.length} className="h-24 text-center text-muted-foreground">
-                No projects found.
-              </td>
-            </tr>
-          ) : (
-            sortedProjects.map(project => (
-              <tr 
-                key={project.id} 
-                className="border-b hover:bg-muted/50 cursor-pointer" 
-                onClick={() => onViewProject(project.id)}
-              >
-                {visibleOrderedColumns.map((column) => (
-                  <td key={`${project.id}-${column.id}`} className="p-4">
-                    {column.cell ? column.cell(project) : project[column.accessorKey]}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <Table className="w-full table-fixed border-collapse">
+          <TableHeader className="bg-muted/50">
+            <TableRow className="border-b hover:bg-transparent">
+              {visibleOrderedColumns.map((column) => (
+                <DraggableColumnHeader 
+                  key={column.id} 
+                  column={column} 
+                  onColumnReorder={onColumnReorder}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedProjects.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={visibleOrderedColumns.length} className="h-16 text-center text-muted-foreground">
+                  No projects found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              sortedProjects.map(project => (
+                <TableRow 
+                  key={project.id} 
+                  className="hover:bg-muted/30 cursor-pointer border-b" 
+                  onClick={() => onViewProject(project.id)}
+                >
+                  {visibleOrderedColumns.map((column) => (
+                    <TableCell key={`${project.id}-${column.id}`} className="py-1 px-2">
+                      {column.cell ? column.cell(project) : project[column.accessorKey]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
