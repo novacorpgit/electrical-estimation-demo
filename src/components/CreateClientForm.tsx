@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ClientInfoForm, ClientInfo } from "@/components/client/ClientInfoForm";
 import { ContactPersonForm, ContactPerson } from "@/components/client/ContactPersonForm";
+import { Plus, User } from "lucide-react";
 
 // Mock data for sales reps
 const mockSalesReps = [
@@ -129,6 +130,7 @@ export const CreateClientForm = ({ onCancel, onSuccess }: CreateClientFormProps)
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Contact Persons</h3>
           <Button type="button" variant="outline" onClick={addContactPerson}>
+            <Plus className="h-4 w-4 mr-1" />
             Add Contact
           </Button>
         </div>
@@ -143,6 +145,43 @@ export const CreateClientForm = ({ onCancel, onSuccess }: CreateClientFormProps)
             canRemove={contactPersons.length > 1}
           />
         ))}
+      </div>
+
+      {/* Display contact persons summary */}
+      <div className="mt-6 p-4 border rounded-md bg-gray-50">
+        <h4 className="text-sm font-medium mb-2 flex items-center">
+          <User className="h-4 w-4 mr-1" />
+          Contact Persons Summary
+        </h4>
+        {contactPersons.some(p => p.name) ? (
+          <ul className="space-y-2">
+            {contactPersons.map((person, index) => (
+              person.name ? (
+                <li key={index} className="text-sm flex items-center justify-between">
+                  <div>
+                    <span className="font-medium">{person.name}</span>
+                    {person.designation && <span className="text-gray-500 ml-2">({person.designation})</span>}
+                    <span className="block text-gray-500 text-xs">{person.email || "No email provided"}</span>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-xs h-7 px-2"
+                    onClick={() => {
+                      // Scroll to the contact person form
+                      document.getElementById(`contact-person-${index}`)?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </li>
+              ) : null
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">No contact persons added yet.</p>
+        )}
       </div>
 
       <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t mt-8">

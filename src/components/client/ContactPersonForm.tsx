@@ -36,7 +36,7 @@ export const ContactPersonForm = ({
   canRemove,
 }: ContactPersonFormProps) => {
   return (
-    <div className="border p-4 rounded-md space-y-4">
+    <div id={`contact-person-${index}`} className="border p-4 rounded-md space-y-4">
       <div className="flex justify-between items-center">
         <h4 className="font-medium">Contact Person {index + 1}</h4>
         {canRemove && (
