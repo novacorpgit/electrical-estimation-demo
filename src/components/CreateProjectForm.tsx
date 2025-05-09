@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Calendar, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // Mock data for sales reps and estimators
@@ -182,13 +181,38 @@ export const CreateProjectForm = ({
         setSelectedClient(null);
       }
     }
+
+    // When an estimator is selected, set the start date to their next available date
+    if (name === "estimatorId" && value) {
+      const estimator = mockEstimators.find(e => e.id === value);
+      if (estimator) {
+        // Find the next available estimator time from mock data
+        const nextAvailableDate = getNextAvailableDateForEstimator(value);
+        if (nextAvailableDate) {
+          setFormData(prev => ({
+            ...prev,
+            startDate: nextAvailableDate,
+            estimationDate: nextAvailableDate
+          }));
+        }
+      }
+    }
+  };
+
+  // Function to get the next available date for an estimator from the mock data
+  const getNextAvailableDateForEstimator = (estimatorId: string): string => {
+    // This function would ideally fetch from your API
+    // For now, we'll simulate with some mock logic based on the current date
+    const today = new Date();
+    return format(addDays(today, Math.floor(Math.random() * 5) + 1), 'yyyy-MM-dd');
   };
   
   const handleEstimatorSelect = (date: string, estimatorId: string) => {
     setFormData(prev => ({
       ...prev,
       estimationDate: date,
-      estimatorId: estimatorId
+      estimatorId: estimatorId,
+      startDate: date // Also update the project start date when estimator and date are selected
     }));
   };
 
@@ -443,9 +467,21 @@ export const CreateProjectForm = ({
                   <SelectValue placeholder="Select estimator" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockEstimators.map(estimator => (
-                    <SelectItem key={estimator.id} value={estimator.id}>{estimator.name}</SelectItem>
-                  ))}
+                  {mockEstimators.map(estimator => {
+                    // Find next available date for this estimator
+                    const nextAvailable = format(addDays(new Date(), Math.floor(Math.random() * 5) + 1), 'MMM dd');
+                    return (
+                      <SelectItem key={estimator.id} value={estimator.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{estimator.name}</span>
+                          <Badge variant="outline" className="ml-2 bg-green-50 text-green-800">
+                            <Calendar className="h-3 w-3 mr-1" /> 
+                            {nextAvailable}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -591,13 +627,31 @@ export const CreateProjectForm = ({
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t mt-8">
-        <Button variant="outline" onClick={onCancel} type="button" size="lg">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting} size="lg">
-          {isSubmitting ? "Creating..." : "Create Project"}
-        </Button>
+      <div className="flex items-center justify-between space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t mt-8">
+        {/* Quote Number Display on the left */}
+        {requiredFieldsFilled && formData.estimatorId && formData.quoteNumber && (
+          <div className="flex items-center">
+            <div className="px-4 py-2 border bg-muted/10 rounded-md">
+              <div className="flex items-center">
+                <Info className="h-4 w-4 text-muted-foreground mr-2" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Quote Number:</p>
+                  <p className="text-sm font-mono font-bold">{formData.quoteNumber}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Buttons on the right */}
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onCancel} type="button" size="lg">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} size="lg">
+            {isSubmitting ? "Creating..." : "Create Project"}
+          </Button>
+        </div>
       </div>
     </form>
   );
