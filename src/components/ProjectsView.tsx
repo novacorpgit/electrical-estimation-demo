@@ -330,7 +330,7 @@ export const ProjectsView = () => {
                       <th className="h-10 px-4 text-left">
                         <div className="flex items-center space-x-2">
                           <Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} />
-                          <span>ID</span>
+                          <span>Quote No</span>
                         </div>
                       </th>
                       <th className="h-10 px-4 text-left">Project Name</th>
