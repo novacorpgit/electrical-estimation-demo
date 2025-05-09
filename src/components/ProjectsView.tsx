@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,33 +13,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CreateClientForm } from "./CreateClientForm";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-
-// Project type for TypeScript
-interface Project {
-  id: string;
-  projectName: string;
-  quoteNumber: string;
-  customer: string;
-  priorityLevel: string;
-  rep: string;
-  description: string;
-  eta: string;
-  hours: number;
-  status: string;
-  reviewedBy: string;
-  clientName: string;
-  state: string;
-  startDate: string;
-  priority: string;
-  estimatorName: string;
-}
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Updated mock project data with fields from image
-const mockProjects: Project[] = [
+const mockProjects = [
   {
     id: "P001",
     projectName: "UTS CB15 STAGE 1",
@@ -133,12 +117,7 @@ const mockProjects: Project[] = [
 ];
 
 // Mock clients for dropdown
-interface Client {
-  id: string;
-  name: string;
-}
-
-const mockClients: Client[] = [
+const mockClients = [
   { id: "C001", name: "ABC Construction" },
   { id: "C002", name: "XYZ Properties" },
   { id: "C003", name: "State Health Department" },
@@ -155,121 +134,33 @@ export const ProjectsView = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [quickFilterProjectName, setQuickFilterProjectName] = useState("");
   const [quickFilterClientName, setQuickFilterClientName] = useState("");
-  const [filteredQuickResults, setFilteredQuickResults] = useState<Project[]>([]);
+  const [filteredQuickResults, setFilteredQuickResults] = useState<any[]>([]);
   const [showQuickResults, setShowQuickResults] = useState(false);
-  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<Project | null>(null);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<any>(null);
   const [showCreateClient, setShowCreateClient] = useState(false);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [filteredClients, setFilteredClients] = useState<any[]>([]);
   const [showClientResults, setShowClientResults] = useState(false);
   const [showEstimatorAvailability, setShowEstimatorAvailability] = useState(false);
   const [selectedEstimatorId, setSelectedEstimatorId] = useState<string | null>(null);
   const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
-  const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<Project | null>(null);
+  const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
 
   // Filter projects based on search term and active tab
-  const filteredProjects = useMemo(() => {
-    return mockProjects.filter(project => {
-      const matchesSearch = 
-        project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      if (activeTab === "all") return matchesSearch;
-      if (activeTab === "inProgress") return matchesSearch && project.status !== "COMPLETED" && project.status !== "NO QUOTE";
-      if (activeTab === "completed") return matchesSearch && project.status === "COMPLETED";
-      if (activeTab === "draft") return matchesSearch && project.status === "Draft";
-      if (activeTab === "onHold") return matchesSearch && project.status === "On Hold";
-      
-      return matchesSearch;
-    });
-  }, [searchTerm, activeTab, mockProjects]);
-
-  // AG Grid Column Definitions with properly typed fields
-  const columnDefs = useMemo<ColDef<Project>[]>(() => [
-    {
-      headerName: '',
-      field: 'id',
-      width: 70,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      sortable: false,
-      filter: false,
-      resizable: true,
-    },
-    {
-      headerName: 'Hours',
-      field: 'hours',
-      width: 100,
-      resizable: true,
-    },
-    {
-      headerName: 'Quote No.',
-      field: 'quoteNumber',
-      resizable: true,
-      width: 150,
-    },
-    {
-      headerName: 'Customer & Priority Level',
-      field: 'customer',
-      resizable: true,
-      width: 250,
-      cellRenderer: (params: any) => {
-        return `<div>${params.data.customer}<br><span style="font-size: 0.8em;">${params.data.priorityLevel}</span></div>`;
-      }
-    },
-    {
-      headerName: 'Rep',
-      field: 'rep',
-      resizable: true,
-      width: 120,
-    },
-    {
-      headerName: 'Description',
-      field: 'description',
-      resizable: true,
-      width: 200,
-    },
-    {
-      headerName: 'ETA given by Customer',
-      field: 'eta',
-      resizable: true,
-      width: 180,
-    },
-    {
-      headerName: 'Status',
-      field: 'status',
-      resizable: true,
-      width: 150,
-    },
-    {
-      headerName: 'Reviewed By (over $75K)',
-      field: 'reviewedBy',
-      resizable: true,
-      width: 200,
-    },
-    {
-      headerName: 'Actions',
-      field: 'id',
-      resizable: true,
-      sortable: false,
-      filter: false,
-      width: 180,
-      cellRenderer: (params: any) => {
-        return `
-          <button class="ag-grid-button view-button">View</button>
-          <button class="ag-grid-button edit-button">Edit</button>
-        `;
-      }
-    }
-  ], []);
-
-  // AG Grid Default Column Definitions
-  const defaultColDef = useMemo(() => ({
-    sortable: true,
-    filter: true,
-    resizable: true,
-  }), []);
+  const filteredProjects = mockProjects.filter(project => {
+    const matchesSearch = 
+      project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (activeTab === "all") return matchesSearch;
+    if (activeTab === "inProgress") return matchesSearch && project.status !== "COMPLETED" && project.status !== "NO QUOTE";
+    if (activeTab === "completed") return matchesSearch && project.status === "COMPLETED";
+    if (activeTab === "draft") return matchesSearch && project.status === "Draft";
+    if (activeTab === "onHold") return matchesSearch && project.status === "On Hold";
+    
+    return matchesSearch;
+  });
 
   // Quick filter effect for projects
   useEffect(() => {
@@ -323,22 +214,23 @@ export const ProjectsView = () => {
     }
   };
 
-  // AG Grid Row Selection Event
-  const onSelectionChanged = (event: any) => {
-    const selectedRows = event.api.getSelectedRows();
-    setSelectedProjects(selectedRows.map((row: Project) => row.id));
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "In Progress": return "bg-blue-100 text-blue-800";
+      case "COMPLETED": return "bg-green-100 text-green-800";
+      case "Draft": return "bg-gray-100 text-gray-800";
+      case "On Hold": return "bg-yellow-100 text-yellow-800";
+      case "NO QUOTE": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
   };
 
-  // AG Grid Cell Click Event
-  const onCellClicked = (params: any) => {
-    // Handle button clicks in the actions column
-    if (params.column.colId === 'id') {
-      const classList = params.event.target.classList;
-      if (classList.contains('view-button')) {
-        handleViewProject(params.data.id);
-      } else if (classList.contains('edit-button')) {
-        openEditProject(params.data);
-      }
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High": return "bg-orange-100 text-orange-800";
+      case "Critical": return "bg-red-100 text-red-800";
+      case "Normal": return "bg-blue-100 text-blue-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -483,7 +375,7 @@ export const ProjectsView = () => {
                       <span className="font-medium">{project.projectName}</span> 
                       <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
                     </div>
-                    <span className="px-2 py-1 rounded text-xs font-medium">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
                       {project.status}
                     </span>
                   </li>
@@ -533,20 +425,86 @@ export const ProjectsView = () => {
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-4">
-              <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
-                <AgGridReact
-                  rowData={filteredProjects}
-                  columnDefs={columnDefs}
-                  defaultColDef={defaultColDef}
-                  rowSelection="multiple"
-                  onSelectionChanged={onSelectionChanged}
-                  onCellClicked={onCellClicked}
-                  suppressRowClickSelection={true}
-                  pagination={true}
-                  paginationPageSize={10}
-                  paginationPageSizeSelector={[5, 10, 20, 50]}
-                />
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox 
+                        checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} 
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead>Hours</TableHead>
+                    <TableHead>Quote No.</TableHead>
+                    <TableHead>Customer & Priority Level</TableHead>
+                    <TableHead>Rep</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>ETA given by Customer</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Reviewed By (over $75K)</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProjects.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
+                        No projects found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredProjects.map((project) => (
+                      <TableRow 
+                        key={project.id} 
+                        className="cursor-pointer"
+                        onClick={() => handleViewProject(project.id)}
+                      >
+                        <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={selectedProjects.includes(project.id)}
+                            onCheckedChange={() => handleSelectProject(project.id)}
+                          />
+                        </TableCell>
+                        <TableCell>{project.hours}</TableCell>
+                        <TableCell className="font-medium">{project.quoteNumber}</TableCell>
+                        <TableCell>
+                          <div className={project.customer === 'Blackrock Electrical Contractors' || project.customer === 'KEECE ELECTRICAL SERVICES' ? 'bg-yellow-200 px-2 py-1 rounded' : ''}>
+                            {project.customer}
+                            <span className="ml-2 text-sm">{project.priorityLevel}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{project.rep}</TableCell>
+                        <TableCell>{project.description}</TableCell>
+                        <TableCell className={project.eta ? 'bg-green-100 text-center' : ''}>
+                          {project.eta}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
+                            {project.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{project.reviewedBy}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="space-x-1">
+                            <Button variant="ghost" size="sm" onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProject(project.id);
+                            }}>
+                              View
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={(e) => {
+                              e.stopPropagation();
+                              openEditProject(project);
+                            }}>
+                              Edit
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -642,3 +600,4 @@ export const ProjectsView = () => {
     </div>
   );
 };
+
