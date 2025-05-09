@@ -1,15 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +29,6 @@ type ProjectFormData = {
   estimatorId: string; // Added field for estimator assignment
   estimationDate: string; // Added field for estimation date
 };
-
 interface CreateProjectFormProps {
   onCancel: () => void;
   onSuccess?: () => void;
@@ -45,9 +37,14 @@ interface CreateProjectFormProps {
     clientName?: string;
   };
 }
-
-export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreateProjectFormProps) => {
-  const { toast } = useToast();
+export const CreateProjectForm = ({
+  onCancel,
+  onSuccess,
+  initialData
+}: CreateProjectFormProps) => {
+  const {
+    toast
+  } = useToast();
   const [activeTab, setActiveTab] = useState<string>("details");
   const [formData, setFormData] = useState<ProjectFormData>({
     projectName: initialData?.projectName || "",
@@ -64,8 +61,9 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
     description: "",
     notes: "",
     estimatorHours: "",
-    estimatorId: "", // New field with empty default
-    estimationDate: "", // New field with empty default
+    estimatorId: "",
+    // New field with empty default
+    estimationDate: "" // New field with empty default
   });
 
   // Update form data if initialData changes
@@ -78,26 +76,30 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
       }));
     }
   }, [initialData]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEstimatorSelect = (date: string, estimatorId: string) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      estimationDate: date,
-      estimatorId: estimatorId 
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
-
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  const handleEstimatorSelect = (date: string, estimatorId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      estimationDate: date,
+      estimatorId: estimatorId
+    }));
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -107,19 +109,18 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
       toast({
         title: "Missing required fields",
         description: "Please fill in all required fields before submitting.",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
       return;
     }
-
     try {
       // In a real implementation, we'd save to Supabase here
       // For now let's simulate success after a delay
       setTimeout(() => {
         toast({
           title: "Project created",
-          description: `Project "${formData.projectName}" has been created successfully.`,
+          description: `Project "${formData.projectName}" has been created successfully.`
         });
         setIsSubmitting(false);
         onSuccess?.();
@@ -130,14 +131,12 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
       toast({
         title: "Error creating project",
         description: "There was an error creating your project. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
     }
   };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  return <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 mb-4">
           <TabsTrigger value="details">Project Details</TabsTrigger>
@@ -148,57 +147,27 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="projectName">Project Name *</Label>
-              <Input
-                id="projectName"
-                name="projectName"
-                placeholder="Enter project name"
-                value={formData.projectName}
-                onChange={handleChange}
-                required
-              />
+              <Input id="projectName" name="projectName" placeholder="Enter project name" value={formData.projectName} onChange={handleChange} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="clientName">Client Name *</Label>
-              <Input
-                id="clientName"
-                name="clientName"
-                placeholder="Enter client name"
-                value={formData.clientName}
-                onChange={handleChange}
-                required
-              />
+              <Input id="clientName" name="clientName" placeholder="Enter client name" value={formData.clientName} onChange={handleChange} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="salesRep">Sales Rep</Label>
-              <Input
-                id="salesRep"
-                name="salesRep"
-                placeholder="Enter sales rep name"
-                value={formData.salesRep}
-                onChange={handleChange}
-              />
+              <Input id="salesRep" name="salesRep" placeholder="Enter sales rep name" value={formData.salesRep} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address *</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="Enter address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-              />
+              <Input id="address" name="address" placeholder="Enter address" value={formData.address} onChange={handleChange} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="state">State *</Label>
-              <Select
-                value={formData.state}
-                onValueChange={(value) => handleSelectChange("state", value)}
-              >
+              <Select value={formData.state} onValueChange={value => handleSelectChange("state", value)}>
                 <SelectTrigger id="state">
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
@@ -214,10 +183,7 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
 
             <div className="space-y-2">
               <Label htmlFor="classification">Project Classification</Label>
-              <Select
-                value={formData.classification}
-                onValueChange={(value) => handleSelectChange("classification", value)}
-              >
+              <Select value={formData.classification} onValueChange={value => handleSelectChange("classification", value)}>
                 <SelectTrigger id="classification">
                   <SelectValue />
                 </SelectTrigger>
@@ -231,57 +197,27 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
 
             <div className="space-y-2">
               <Label htmlFor="startDate">Project Start Date</Label>
-              <Input
-                id="startDate"
-                name="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={handleChange}
-              />
+              <Input id="startDate" name="startDate" type="date" value={formData.startDate} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="estimatorHours">Estimator Hours</Label>
-              <Input
-                id="estimatorHours"
-                name="estimatorHours"
-                type="number"
-                placeholder="Enter estimated hours"
-                value={formData.estimatorHours}
-                onChange={handleChange}
-                min="0"
-                step="0.5"
-              />
+              <Input id="estimatorHours" name="estimatorHours" type="number" placeholder="Enter estimated hours" value={formData.estimatorHours} onChange={handleChange} min="0" step="0.5" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="poNumber">Customer PO Number</Label>
-              <Input
-                id="poNumber"
-                name="poNumber"
-                placeholder="Enter PO number"
-                value={formData.poNumber}
-                onChange={handleChange}
-              />
+              <Input id="poNumber" name="poNumber" placeholder="Enter PO number" value={formData.poNumber} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="refNumber">Internal Ref Number</Label>
-              <Input
-                id="refNumber"
-                name="refNumber"
-                placeholder="Enter reference number"
-                value={formData.refNumber}
-                onChange={handleChange}
-              />
+              <Input id="refNumber" name="refNumber" placeholder="Enter reference number" value={formData.refNumber} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => handleSelectChange("priority", value)}
-              >
+              <Select value={formData.priority} onValueChange={value => handleSelectChange("priority", value)}>
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
@@ -295,10 +231,7 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange("status", value)}
-              >
+              <Select value={formData.status} onValueChange={value => handleSelectChange("status", value)}>
                 <SelectTrigger id="status">
                   <SelectValue />
                 </SelectTrigger>
@@ -313,45 +246,25 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Enter project description"
-              value={formData.description}
-              onChange={handleChange}
-              className="min-h-[100px]"
-            />
+            <Label htmlFor="description">Link</Label>
+            <Textarea id="description" name="description" placeholder="Enter project description" value={formData.description} onChange={handleChange} className="min-h-[100px]" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Internal Notes</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Enter internal notes"
-              value={formData.notes}
-              onChange={handleChange}
-              className="min-h-[100px]"
-            />
+            <Textarea id="notes" name="notes" placeholder="Enter internal notes" value={formData.notes} onChange={handleChange} className="min-h-[100px]" />
           </div>
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
-          <EstimatorAvailability
-            onSelectDate={handleEstimatorSelect}
-            selectedDate={formData.estimationDate}
-            selectedEstimatorId={formData.estimatorId}
-          />
+          <EstimatorAvailability onSelectDate={handleEstimatorSelect} selectedDate={formData.estimationDate} selectedEstimatorId={formData.estimatorId} />
 
-          {formData.estimatorId && formData.estimationDate && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          {formData.estimatorId && formData.estimationDate && <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
               <h3 className="text-lg font-medium text-green-800">Estimator Assigned</h3>
               <p className="text-green-700">
                 The project will be assigned for estimation on {format(new Date(formData.estimationDate), 'MMMM d, yyyy')}
               </p>
-            </div>
-          )}
+            </div>}
         </TabsContent>
       </Tabs>
 
@@ -363,6 +276,5 @@ export const CreateProjectForm = ({ onCancel, onSuccess, initialData }: CreatePr
           {isSubmitting ? "Creating..." : "Create Project"}
         </Button>
       </div>
-    </form>
-  );
+    </form>;
 };
