@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 
 // Mock data for sales reps and estimators
 const mockSalesReps = [
@@ -27,10 +29,36 @@ const mockEstimators = [
   { id: "est5", name: "Robert Davis" }
 ];
 
+// Mock client data with contacts
+const mockClients = [
+  {
+    id: "c1",
+    companyName: "ABC Construction",
+    address: "123 Building St",
+    type: "Contractor",
+    status: "Active",
+    contacts: [
+      { id: "con1", name: "John Smith", designation: "Project Manager", email: "john@abc.com" },
+      { id: "con2", name: "Sarah Lee", designation: "Finance Director", email: "sarah@abc.com" }
+    ]
+  },
+  {
+    id: "c2",
+    companyName: "XYZ Properties",
+    address: "456 Real Estate Ave",
+    type: "Developer",
+    status: "Active",
+    contacts: [
+      { id: "con3", name: "Michael Brown", designation: "CEO", email: "michael@xyz.com" }
+    ]
+  }
+];
+
 // Types
 type ProjectFormData = {
   projectName: string;
   clientName: string;
+  clientId: string;
   salesRep: string;
   address: string;
   state: string;
@@ -44,6 +72,7 @@ type ProjectFormData = {
   estimatorHours: string; 
   estimatorId: string; 
   estimationDate: string; 
+  contactId: string;
 };
 
 interface CreateProjectFormProps {
@@ -60,13 +89,12 @@ export const CreateProjectForm = ({
   onSuccess,
   initialData
 }: CreateProjectFormProps) => {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("details");
   const [formData, setFormData] = useState<ProjectFormData>({
     projectName: initialData?.projectName || "",
     clientName: initialData?.clientName || "",
+    clientId: "",
     salesRep: "",
     address: "",
     state: "",
@@ -79,7 +107,19 @@ export const CreateProjectForm = ({
     notes: "",
     estimatorHours: "",
     estimatorId: "",
-    estimationDate: ""
+    estimationDate: "",
+    contactId: ""
+  });
+
+  // State for client contacts
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [clientContacts, setClientContacts] = useState<any[]>([]);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: "",
+    designation: "",
+    email: "",
+    phone: ""
   });
 
   // Update form data if initialData changes
@@ -96,10 +136,7 @@ export const CreateProjectForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -111,6 +148,24 @@ export const CreateProjectForm = ({
       ...prev,
       [name]: value
     }));
+
+    // Update contact list when client changes
+    if (name === "clientId") {
+      const client = mockClients.find(c => c.id === value);
+      if (client) {
+        setSelectedClient(client);
+        setClientContacts(client.contacts);
+        // Reset selected contact when client changes
+        setFormData(prev => ({
+          ...prev,
+          contactId: "",
+          clientName: client.companyName
+        }));
+      } else {
+        setClientContacts([]);
+        setSelectedClient(null);
+      }
+    }
   };
   
   const handleEstimatorSelect = (date: string, estimatorId: string) => {
@@ -120,13 +175,55 @@ export const CreateProjectForm = ({
       estimatorId: estimatorId
     }));
   };
+
+  const handleAddContact = () => {
+    if (!newContact.name || !newContact.email) {
+      toast({
+        title: "Missing information",
+        description: "Name and email are required for a new contact.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real app, you would save this to your database
+    const newContactWithId = {
+      id: `new-${Date.now()}`,
+      ...newContact
+    };
+
+    // Add contact to the current selected client's contacts
+    if (selectedClient) {
+      setClientContacts(prev => [...prev, newContactWithId]);
+      
+      // Select the new contact
+      setFormData(prev => ({
+        ...prev,
+        contactId: newContactWithId.id
+      }));
+
+      toast({
+        title: "Contact added",
+        description: `${newContact.name} has been added as a contact.`
+      });
+
+      // Reset the form and close the dialog
+      setNewContact({
+        name: "",
+        designation: "",
+        email: "",
+        phone: ""
+      });
+      setShowAddContact(false);
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     // Ensure we have the required fields
-    if (!formData.projectName || !formData.clientName || !formData.state) {
+    if (!formData.projectName || !formData.clientId || !formData.state) {
       toast({
         title: "Missing required fields",
         description: "Please fill in all required fields before submitting.",
@@ -158,7 +255,8 @@ export const CreateProjectForm = ({
     }
   };
   
-  return <form onSubmit={handleSubmit} className="space-y-4">
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 mb-4">
           <TabsTrigger value="details">Project Details</TabsTrigger>
@@ -173,9 +271,48 @@ export const CreateProjectForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clientName">Client Name *</Label>
-              <Input id="clientName" name="clientName" placeholder="Enter client name" value={formData.clientName} onChange={handleChange} required />
+              <Label htmlFor="clientId">Client *</Label>
+              <Select value={formData.clientId} onValueChange={value => handleSelectChange("clientId", value)}>
+                <SelectTrigger id="clientId">
+                  <SelectValue placeholder="Select client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockClients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>{client.companyName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {selectedClient && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="contactId">Contact Person</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowAddContact(true)}
+                    className="h-6 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add New
+                  </Button>
+                </div>
+                <Select value={formData.contactId} onValueChange={value => handleSelectChange("contactId", value)}>
+                  <SelectTrigger id="contactId">
+                    <SelectValue placeholder="Select contact" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientContacts.map(contact => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.name} {contact.designation ? `(${contact.designation})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="salesRep">Sales Rep</Label>
@@ -299,14 +436,70 @@ export const CreateProjectForm = ({
         <TabsContent value="schedule" className="space-y-6">
           <EstimatorAvailability onSelectDate={handleEstimatorSelect} selectedDate={formData.estimationDate} selectedEstimatorId={formData.estimatorId} />
 
-          {formData.estimatorId && formData.estimationDate && <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          {formData.estimatorId && formData.estimationDate && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
               <h3 className="text-lg font-medium text-green-800">Estimator Assigned</h3>
               <p className="text-green-700">
                 The project will be assigned for estimation on {format(new Date(formData.estimationDate), 'MMMM d, yyyy')}
               </p>
-            </div>}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialog for adding new contact */}
+      <Dialog open={showAddContact} onOpenChange={setShowAddContact}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Contact to {selectedClient?.companyName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="contactName">Name *</Label>
+              <Input 
+                id="contactName" 
+                value={newContact.name} 
+                onChange={(e) => setNewContact({...newContact, name: e.target.value})} 
+                placeholder="Enter contact name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactDesignation">Designation</Label>
+              <Input 
+                id="contactDesignation" 
+                value={newContact.designation} 
+                onChange={(e) => setNewContact({...newContact, designation: e.target.value})} 
+                placeholder="e.g., Project Manager"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactEmail">Email *</Label>
+              <Input 
+                id="contactEmail" 
+                type="email" 
+                value={newContact.email} 
+                onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone">Phone</Label>
+              <Input 
+                id="contactPhone" 
+                value={newContact.phone} 
+                onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowAddContact(false)}>Cancel</Button>
+              <Button onClick={handleAddContact}>Add Contact</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background p-4 border-t mt-8">
         <Button variant="outline" onClick={onCancel} type="button" size="lg">
@@ -316,5 +509,6 @@ export const CreateProjectForm = ({
           {isSubmitting ? "Creating..." : "Create Project"}
         </Button>
       </div>
-    </form>;
+    </form>
+  );
 };
