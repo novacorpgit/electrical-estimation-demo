@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { User } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 // Define column type
 type TableColumn = {
@@ -12,7 +12,6 @@ type TableColumn = {
   header: string;
   accessorKey: string;
   enableSorting?: boolean;
-  enableFiltering?: boolean;
   cell?: (info: any) => React.ReactNode;
 };
 
@@ -32,7 +31,19 @@ interface ProjectsTableProps {
 }
 
 // Drag and drop column header component
-const DraggableColumnHeader = ({ column, onColumnReorder }: { column: TableColumn, onColumnReorder: (drag: string, target: string) => void }) => {
+const DraggableColumnHeader = ({ 
+  column, 
+  onColumnReorder, 
+  sortColumn,
+  sortDirection,
+  onSort
+}: { 
+  column: TableColumn, 
+  onColumnReorder: (drag: string, target: string) => void,
+  sortColumn: string | null,
+  sortDirection: 'asc' | 'desc' | null,
+  onSort: (columnId: string) => void
+}) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'COLUMN',
     item: { id: column.id },
@@ -53,19 +64,35 @@ const DraggableColumnHeader = ({ column, onColumnReorder }: { column: TableColum
     }),
   });
 
+  const isSorted = sortColumn === column.id;
+
   return (
     <th
       ref={(node) => drag(drop(node))}
       className={`h-10 px-4 text-left ${isDragging ? 'opacity-50' : ''} ${isOver ? 'bg-gray-100' : ''} cursor-move`}
     >
-      <div className="flex flex-col">
+      <div className="flex items-center space-x-1">
         <span>{column.header}</span>
-        {column.enableFiltering && (
-          <Input 
-            className="mt-1 h-6 text-xs" 
-            placeholder={`Filter ${column.header}...`}
-            onClick={(e) => e.stopPropagation()}
-          />
+        {column.enableSorting && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSort(column.id);
+            }}
+            className="ml-1 focus:outline-none"
+          >
+            {isSorted ? (
+              sortDirection === 'asc' ? (
+                <ArrowUp className="h-4 w-4" />
+              ) : (
+                <ArrowDown className="h-4 w-4" />
+              )
+            ) : (
+              <div className="h-4 w-4 opacity-0 group-hover:opacity-50">
+                <ArrowUp className="h-4 w-4" />
+              </div>
+            )}
+          </button>
         )}
       </div>
     </th>
@@ -86,6 +113,27 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   getStatusColor,
   getPriorityColor
 }) => {
+  // Add sorting state
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+
+  // Handle sorting
+  const handleSort = (columnId: string) => {
+    if (sortColumn === columnId) {
+      // Toggle direction or remove sort
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortColumn(null);
+        setSortDirection(null);
+      }
+    } else {
+      // New column sort
+      setSortColumn(columnId);
+      setSortDirection('asc');
+    }
+  };
+
   // Define our columns configuration
   const columns: TableColumn[] = [
     {
@@ -93,7 +141,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Quote No',
       accessorKey: 'id',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => (
         <div className="flex items-center space-x-2">
           <Checkbox 
@@ -110,7 +157,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Project Name',
       accessorKey: 'projectName',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => <span className="font-medium">{project.projectName}</span>
     },
     {
@@ -118,7 +164,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Customer',
       accessorKey: 'clientName',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => <span>{project.clientName}</span>
     },
     {
@@ -126,7 +171,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Estimator',
       accessorKey: 'estimatorName',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => (
         <div onClick={(e) => e.stopPropagation()}>
           {project.estimatorName ? (
@@ -156,7 +200,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'State',
       accessorKey: 'state',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => <span>{project.state}</span>
     },
     {
@@ -164,7 +207,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Status',
       accessorKey: 'status',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => (
         <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
           {project.status}
@@ -176,7 +218,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Priority',
       accessorKey: 'priority',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => (
         <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(project.priority)}`}>
           {project.priority}
@@ -188,13 +229,13 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       header: 'Start Date',
       accessorKey: 'startDate',
       enableSorting: true,
-      enableFiltering: true,
       cell: (project) => <span>{project.startDate}</span>
     },
     {
       id: 'actions',
       header: 'Actions',
       accessorKey: 'actions',
+      enableSorting: false,
       cell: (project) => (
         <div onClick={(e) => e.stopPropagation()} className="space-x-1">
           <Button 
@@ -228,6 +269,23 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
     .map(columnId => columns.find(col => col.id === columnId))
     .filter(Boolean) as TableColumn[];
 
+  // Apply sorting to projects if sorting is active
+  const sortedProjects = [...projects];
+  if (sortColumn && sortDirection) {
+    sortedProjects.sort((a, b) => {
+      const valueA = a[sortColumn];
+      const valueB = b[sortColumn];
+      
+      if (valueA < valueB) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
   return (
     <div className="rounded-md border overflow-hidden">
       <table className="w-full">
@@ -237,20 +295,23 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
               <DraggableColumnHeader 
                 key={column.id} 
                 column={column} 
-                onColumnReorder={onColumnReorder} 
+                onColumnReorder={onColumnReorder}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
               />
             ))}
           </tr>
         </thead>
         <tbody>
-          {projects.length === 0 ? (
+          {sortedProjects.length === 0 ? (
             <tr>
               <td colSpan={visibleOrderedColumns.length} className="h-24 text-center text-muted-foreground">
                 No projects found.
               </td>
             </tr>
           ) : (
-            projects.map(project => (
+            sortedProjects.map(project => (
               <tr 
                 key={project.id} 
                 className="border-b hover:bg-muted/50 cursor-pointer" 
