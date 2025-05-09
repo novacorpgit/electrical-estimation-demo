@@ -37,6 +37,43 @@ export const Navigation = ({ pageTitle }: NavigationProps) => {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Panelboard Estimation System</h1>
+          <div className="flex space-x-2">
+            <Button 
+              variant={isActive('/') ? 'default' : 'outline'} 
+              onClick={() => navigate('/')}
+              size="sm"
+            >
+              Dashboard
+            </Button>
+            <Button 
+              variant={isActive('/projects') ? 'default' : 'outline'} 
+              onClick={() => navigate('/projects')}
+              size="sm"
+            >
+              Projects
+            </Button>
+            <Button 
+              variant={isActive('/clients') ? 'default' : 'outline'} 
+              onClick={() => navigate('/clients')}
+              size="sm"
+            >
+              Clients
+            </Button>
+            <Button 
+              variant={isActive('/templates') ? 'default' : 'outline'} 
+              onClick={() => navigate('/templates')}
+              size="sm"
+            >
+              Panel Templates
+            </Button>
+            <Button 
+              variant={isActive('/bom-upload') ? 'default' : 'outline'} 
+              onClick={() => navigate('/bom-upload')}
+              size="sm"
+            >
+              BOM Upload
+            </Button>
+          </div>
         </div>
         
         <NavigationMenu className="mt-4">
