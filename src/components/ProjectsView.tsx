@@ -1,4 +1,3 @@
-
 // At the top of the file, ensure the DndProvider and HTML5Backend are properly imported
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +24,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 // Mocked project data with additional fields
 const mockProjects = [{
@@ -602,33 +602,34 @@ export const ProjectsView = () => {
         </CardContent>
       </Card>
 
-      {showCreateProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>{selectedProjectForEdit ? `Edit Project: ${selectedProjectForEdit.projectName}` : 'Create New Project'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CreateProjectForm 
-                onCancel={() => {
-                  setShowCreateProject(false);
-                  setSelectedProjectForEdit(null);
-                }} 
-                onSuccess={() => {
-                  setSelectedProjectForEdit(null);
-                }} 
-                initialData={selectedProjectForEdit ? {
-                  projectName: selectedProjectForEdit.projectName,
-                  clientName: selectedProjectForEdit.clientName
-                } : {
-                  projectName: quickFilterProjectName,
-                  clientName: quickFilterClientName
-                }} 
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Sheet for project creation instead of modal */}
+      <Sheet open={showCreateProject} onOpenChange={setShowCreateProject}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto" side="right">
+          <SheetHeader>
+            <SheetTitle>
+              {selectedProjectForEdit ? `Edit Project: ${selectedProjectForEdit.projectName}` : 'Create New Project'}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="py-6">
+            <CreateProjectForm 
+              onCancel={() => {
+                setShowCreateProject(false);
+                setSelectedProjectForEdit(null);
+              }} 
+              onSuccess={() => {
+                setSelectedProjectForEdit(null);
+              }} 
+              initialData={selectedProjectForEdit ? {
+                projectName: selectedProjectForEdit.projectName,
+                clientName: selectedProjectForEdit.clientName
+              } : {
+                projectName: quickFilterProjectName,
+                clientName: quickFilterClientName
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Client Creation Dialog */}
       <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>

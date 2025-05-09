@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const PanelboardDashboard = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -132,21 +133,17 @@ export const PanelboardDashboard = () => {
         </Card>
       </div>
 
-      {showCreateProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>Create New Project</CardTitle>
-              <CardDescription>
-                Enter the details for your new electrical panelboard project.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CreateProjectForm onCancel={() => setShowCreateProject(false)} />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Sheet for project creation instead of modal */}
+      <Sheet open={showCreateProject} onOpenChange={setShowCreateProject}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto" side="right">
+          <SheetHeader>
+            <SheetTitle>Create New Project</SheetTitle>
+          </SheetHeader>
+          <div className="py-6">
+            <CreateProjectForm onCancel={() => setShowCreateProject(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
