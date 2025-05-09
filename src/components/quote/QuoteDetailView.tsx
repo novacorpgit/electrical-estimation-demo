@@ -3,15 +3,20 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Printer, 
   Edit,
   Save,
   ArrowUp,
   ArrowDown,
-  FileText
+  FileText,
+  Copy,
+  AlertTriangle,
+  Check
 } from "lucide-react";
 import { BomItem, defaultCategories } from "./bom/BomTypes";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuoteDetailViewProps {
   quote: {
@@ -30,13 +35,20 @@ interface QuoteDetailViewProps {
   };
   onEdit: () => void;
   onBack: () => void;
+  onRevision?: () => void;
+  onDuplicate?: () => void;
 }
 
 export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
   quote,
   onEdit,
   onBack,
+  onRevision,
+  onDuplicate,
 }) => {
+  const { toast } = useToast();
+  const isCompleted = quote.status === "Approved" || quote.status === "Completed";
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Draft":
@@ -44,11 +56,34 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
       case "Pending Approval":
         return "bg-yellow-100 text-yellow-800";
       case "Approved":
+      case "Completed":
         return "bg-green-100 text-green-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleMakeRevision = () => {
+    if (onRevision) {
+      onRevision();
+    } else {
+      toast({
+        title: "Feature not yet implemented",
+        description: "The revision feature is coming soon.",
+      });
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (onDuplicate) {
+      onDuplicate();
+    } else {
+      toast({
+        title: "Feature not yet implemented",
+        description: "The duplicate feature is coming soon.",
+      });
     }
   };
 
@@ -71,6 +106,15 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {isCompleted && (
+        <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+          <Check className="h-5 w-5 text-blue-800" />
+          <AlertDescription className="font-medium">
+            This project is completed. To make changes, click 'Make a Revision' below.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={onBack}>
           <ArrowUp className="mr-2 h-4 w-4" />
@@ -85,10 +129,30 @@ export const QuoteDetailView: React.FC<QuoteDetailViewProps> = ({
             <Save className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          <Button onClick={onEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Quote
-          </Button>
+          {isCompleted ? (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handleMakeRevision}
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Make a Revision
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleDuplicate}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Duplicate
+              </Button>
+            </>
+          ) : (
+            <Button onClick={onEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Quote
+            </Button>
+          )}
         </div>
       </div>
 

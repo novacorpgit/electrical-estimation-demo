@@ -2,6 +2,8 @@
 import React from 'react';
 import { Navigation } from "@/components/Navigation";
 import { ProjectsView } from "@/components/ProjectsView";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const ProjectsPage = () => {
   return (

@@ -8,10 +8,18 @@ import { SubProjectsView } from "@/components/SubProjectsView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy } from "lucide-react";
+import { Calendar, Clock, ChartBar, TrendingUp, BanknoteIcon, Copy, AlertTriangle, Check } from "lucide-react";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 // Mock project data - would be fetched from API in a real app
 const getMockProject = (projectId: string) => {
@@ -156,6 +164,7 @@ export const ProjectDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("sub-projects");
   const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
 
   const handleQuoteGeneration = (subProjectId: string) => {
     // Navigate to the quotation page for this sub-project
@@ -166,6 +175,10 @@ export const ProjectDashboard = () => {
     setShowDuplicateDialog(true);
   };
 
+  const handleMakeRevision = () => {
+    setShowRevisionDialog(true);
+  };
+
   const executeDuplication = () => {
     // In a real app, we would call an API to duplicate the project
     toast({
@@ -173,6 +186,15 @@ export const ProjectDashboard = () => {
       description: "The project has been duplicated successfully",
     });
     setShowDuplicateDialog(false);
+  };
+
+  const executeRevision = () => {
+    // In a real app, we would call an API to create a revision of the project
+    toast({
+      title: "Project revision created",
+      description: "A new revision of the project has been created with status set to 'In Progress'",
+    });
+    setShowRevisionDialog(false);
   };
 
   useEffect(() => {
@@ -206,6 +228,8 @@ export const ProjectDashboard = () => {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
+  const isCompleted = project.status === "Completed";
+
   // Data for the pie chart
   const chartData = [
     { name: "Completed", value: project.subProjectStats.completed, color: "#10B981" },
@@ -218,6 +242,15 @@ export const ProjectDashboard = () => {
       <Navigation />
       
       <main className="container mx-auto p-4 mt-4">
+        {isCompleted && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <Check className="h-5 w-5 text-blue-800" />
+            <AlertDescription className="text-blue-800 font-medium">
+              This project is marked as complete and cannot be edited. To make changes, please create a revision.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="mb-6 flex justify-between items-center">
           <div>
             <div className="flex items-center space-x-2">
@@ -230,49 +263,82 @@ export const ProjectDashboard = () => {
           </div>
 
           <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={handleDuplicateProject}
-            >
-              <Copy className="h-4 w-4" />
-              Duplicate Project
-            </Button>
-            <Button variant="outline">Export Project</Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => {
-                // If there are sub-projects available, we'll generate a quote for the first one
-                const subProjects = mockSubProjects.filter(sp => sp.projectId === projectId);
-                if (subProjects.length > 0) {
-                  handleQuoteGeneration(subProjects[0].id);
-                } else {
-                  toast({
-                    title: "No sub-projects found",
-                    description: "Please create a sub-project first before generating a quotation.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              <BanknoteIcon className="h-4 w-4" />
-              Generate Quotation
-            </Button>
-            <Button variant="default">Edit Project</Button>
+            {isCompleted ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                  onClick={handleMakeRevision}
+                >
+                  <Copy className="h-4 w-4" />
+                  Make a Revision
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">Actions</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleDuplicateProject}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Duplicate Project
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.print()}>
+                      Export Project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleDuplicateProject}
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicate Project
+                </Button>
+                <Button variant="outline">Export Project</Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    // If there are sub-projects available, we'll generate a quote for the first one
+                    const subProjects = mockSubProjects.filter(sp => sp.projectId === projectId);
+                    if (subProjects.length > 0) {
+                      handleQuoteGeneration(subProjects[0].id);
+                    } else {
+                      toast({
+                        title: "No sub-projects found",
+                        description: "Please create a sub-project first before generating a quotation.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  <BanknoteIcon className="h-4 w-4" />
+                  Generate Quotation
+                </Button>
+                <Button variant="default">Edit Project</Button>
+              </>
+            )}
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="sub-projects">Sub-Projects</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="quotes">Quotes</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
           </TabsList>
           
           <TabsContent value="sub-projects">
-            <SubProjectsView projectId={projectId!} projectName={project.projectName} />
+            <SubProjectsView 
+              projectId={projectId!} 
+              projectName={project.projectName} 
+              isProjectCompleted={isCompleted}
+            />
           </TabsContent>
           
           <TabsContent value="documents">
@@ -476,6 +542,31 @@ export const ProjectDashboard = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>Cancel</Button>
             <Button onClick={executeDuplication}>Duplicate Project</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Project Revision Dialog */}
+      <Dialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Revision</DialogTitle>
+            <DialogDescription>
+              Create a new revision of this project that you can edit. The original project will remain unchanged.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">The new revision will:</p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Contain all the same data as the current project</li>
+              <li>Be marked as "In Progress" status</li>
+              <li>Include a reference to the original project</li>
+              <li>Have a new revision number</li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>Cancel</Button>
+            <Button onClick={executeRevision}>Create Revision</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
