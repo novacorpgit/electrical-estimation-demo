@@ -1,4 +1,3 @@
-
 // At the top of the file, ensure the DndProvider and HTML5Backend are properly imported
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +8,7 @@ import { CreateProjectForm } from "./CreateProjectForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Calendar, Clock, User, SlidersHorizontal } from "lucide-react";
+import { Search, Plus, Calendar, Clock, User, SlidersHorizontal, Copy, Edit, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreateClientForm } from "./CreateClientForm";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
@@ -109,6 +108,7 @@ export const ProjectsView = () => {
   const [selectedEstimatorId, setSelectedEstimatorId] = useState<string | null>(null);
   const [selectedEstimatorDate, setSelectedEstimatorDate] = useState<string | null>(null);
   const [selectedProjectForEstimator, setSelectedProjectForEstimator] = useState<any>(null);
+  const [selectedQuickProject, setSelectedQuickProject] = useState<any>(null);
   
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState({
@@ -224,12 +224,33 @@ export const ProjectsView = () => {
 
   const openCreateProjectWithValues = () => {
     setSelectedProjectForEdit(null);
+    setSelectedQuickProject(null);
     setShowCreateProject(true);
   };
 
   const openEditProject = (project: any) => {
     setSelectedProjectForEdit(project);
+    setSelectedQuickProject(null);
     setShowCreateProject(true);
+  };
+  
+  const duplicateProject = (project: any) => {
+    // Set up a new project with data from the selected one but clear the ID
+    setQuickFilterProjectName(`Copy of ${project.projectName}`);
+    setQuickFilterClientName(project.clientName);
+    setSelectedQuickProject(null);
+    toast({
+      title: "Project duplicated",
+      description: `Created a copy of "${project.projectName}". You can now edit the details.`,
+    });
+  };
+
+  const selectQuickProject = (project: any) => {
+    setSelectedQuickProject(project);
+  };
+
+  const clearQuickSelection = () => {
+    setSelectedQuickProject(null);
   };
 
   const handleCreateClient = () => {
@@ -314,7 +335,8 @@ export const ProjectsView = () => {
                   id="quickProjectName" 
                   placeholder="Enter project name..." 
                   value={quickFilterProjectName} 
-                  onChange={e => setQuickFilterProjectName(e.target.value)} 
+                  onChange={e => setQuickFilterProjectName(e.target.value)}
+                  disabled={!!selectedQuickProject} 
                 />
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
               </div>
@@ -331,12 +353,13 @@ export const ProjectsView = () => {
                     if (quickFilterClientName.trim() !== '') {
                       setShowClientResults(true);
                     }
-                  }} 
+                  }}
+                  disabled={!!selectedQuickProject}
                 />
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 
                 {/* Client dropdown results */}
-                {showClientResults && (
+                {showClientResults && !selectedQuickProject && (
                   <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border">
                     <ul className="py-1 max-h-60 overflow-auto">
                       {filteredClients.map(client => (
@@ -367,36 +390,79 @@ export const ProjectsView = () => {
             </div>
           </div>
           
-          {showQuickResults && filteredQuickResults.length > 0 && (
-            <div className="mt-2 mb-4 p-3 border rounded-md bg-amber-50">
-              <h3 className="font-medium mb-2">Similar Projects Found:</h3>
-              <ul className="space-y-2">
-                {filteredQuickResults.slice(0, 3).map(project => (
-                  <li 
-                    key={project.id} 
-                    className="flex justify-between items-center border-b pb-2 hover:bg-amber-100 cursor-pointer p-2 rounded-md transition-colors" 
-                    onClick={() => openEditProject(project)}
+          {selectedQuickProject ? (
+            <div className="mt-2 mb-4 p-3 border rounded-md bg-blue-50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium">Selected Project:</h3>
+                  <p className="text-sm mt-1">
+                    <span className="font-medium">{selectedQuickProject.projectName}</span> 
+                    <span className="text-gray-600 ml-2">({selectedQuickProject.clientName})</span>
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => duplicateProject(selectedQuickProject)}
+                    className="flex items-center"
                   >
-                    <div>
-                      <span className="font-medium">{project.projectName}</span> 
-                      <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
-                      {project.status}
-                    </span>
-                  </li>
-                ))}
-                {filteredQuickResults.length > 3 && (
-                  <li className="text-sm text-gray-600 italic">
-                    + {filteredQuickResults.length - 3} more projects match your search
-                  </li>
-                )}
-              </ul>
+                    <Copy className="h-4 w-4 mr-1" />
+                    Duplicate
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openEditProject(selectedQuickProject)}
+                    className="flex items-center"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={clearQuickSelection}
+                    className="flex items-center"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             </div>
+          ) : (
+            showQuickResults && filteredQuickResults.length > 0 && (
+              <div className="mt-2 mb-4 p-3 border rounded-md bg-amber-50">
+                <h3 className="font-medium mb-2">Similar Projects Found:</h3>
+                <ul className="space-y-2">
+                  {filteredQuickResults.slice(0, 3).map(project => (
+                    <li 
+                      key={project.id} 
+                      className="flex justify-between items-center border-b pb-2 hover:bg-amber-100 cursor-pointer p-2 rounded-md transition-colors" 
+                      onClick={() => selectQuickProject(project)}
+                    >
+                      <div>
+                        <span className="font-medium">{project.projectName}</span> 
+                        <span className="text-sm text-gray-600 ml-2">({project.clientName})</span>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
+                    </li>
+                  ))}
+                  {filteredQuickResults.length > 3 && (
+                    <li className="text-sm text-gray-600 italic">
+                      + {filteredQuickResults.length - 3} more projects match your search
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )
           )}
           
           <div className="flex justify-end">
-            <Button onClick={openCreateProjectWithValues}>
+            <Button onClick={openCreateProjectWithValues} disabled={!!selectedQuickProject}>
               Create New Project
             </Button>
           </div>
