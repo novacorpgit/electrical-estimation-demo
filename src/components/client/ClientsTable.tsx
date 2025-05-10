@@ -1,6 +1,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Mock client data type
 export type Client = {
@@ -37,67 +46,65 @@ export const ClientsTable = ({
   };
 
   return (
-    <div className="rounded-md border">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="h-10 px-4 text-left">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  checked={selectedClients.length === clients.length && clients.length > 0} 
-                  onCheckedChange={onSelectAll}
-                />
-                <span>ID</span>
-              </div>
-            </th>
-            <th className="h-10 px-4 text-left">Company Name</th>
-            <th className="h-10 px-4 text-left">Client Type</th>
-            <th className="h-10 px-4 text-left">Address</th>
-            <th className="h-10 px-4 text-left">Sales Rep</th>
-            <th className="h-10 px-4 text-left">Last Activity</th>
-            <th className="h-10 px-4 text-left">Status</th>
-            <th className="h-10 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                No clients found.
-              </td>
-            </tr>
-          ) : (
-            clients.map((client) => (
-              <tr key={client.id} className="border-b hover:bg-muted/50">
-                <td className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      checked={selectedClients.includes(client.id)}
-                      onCheckedChange={() => onSelectClient(client.id)}
-                    />
-                    <span>{client.id}</span>
-                  </div>
-                </td>
-                <td className="p-4 font-medium">{client.companyName}</td>
-                <td className="p-4">{client.clientType}</td>
-                <td className="p-4">{client.address}</td>
-                <td className="p-4">{client.salesRep}</td>
-                <td className="p-4">{client.lastActivityDate}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(client.status)}`}>
-                    {client.status}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <Button variant="ghost" size="sm">View</Button>
-                  <Button variant="ghost" size="sm">Edit</Button>
-                  <Button variant="ghost" size="sm">Projects</Button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[60px]">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                checked={selectedClients.length === clients.length && clients.length > 0} 
+                onCheckedChange={onSelectAll}
+              />
+              <span>ID</span>
+            </div>
+          </TableHead>
+          <TableHead>Company Name</TableHead>
+          <TableHead>Client Type</TableHead>
+          <TableHead>Address</TableHead>
+          <TableHead>Sales Rep</TableHead>
+          <TableHead>Last Activity</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {clients.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+              No clients found.
+            </TableCell>
+          </TableRow>
+        ) : (
+          clients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    checked={selectedClients.includes(client.id)}
+                    onCheckedChange={() => onSelectClient(client.id)}
+                  />
+                  <span>{client.id}</span>
+                </div>
+              </TableCell>
+              <TableCell className="font-medium">{client.companyName}</TableCell>
+              <TableCell>{client.clientType}</TableCell>
+              <TableCell>{client.address}</TableCell>
+              <TableCell>{client.salesRep}</TableCell>
+              <TableCell>{client.lastActivityDate}</TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(client.status)}`}>
+                  {client.status}
+                </span>
+              </TableCell>
+              <TableCell className="text-right space-x-2">
+                <Button variant="ghost" size="sm">View</Button>
+                <Button variant="ghost" size="sm">Edit</Button>
+                <Button variant="ghost" size="sm">Projects</Button>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 };
