@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
+import { TemplateManager } from "@/components/quote/bom/TemplateManager";
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, FileText, Download, Filter, ArrowLeft, Layers } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
@@ -281,6 +282,17 @@ const BomManagement = () => {
     }
   };
 
+  // Handle loading a template
+  const handleLoadTemplate = (templateItems: BomItem[]) => {
+    // Generate new IDs for all items to ensure uniqueness
+    const itemsWithNewIds = templateItems.map(item => ({
+      ...item,
+      id: uuidv4()
+    }));
+    
+    setRowData(itemsWithNewIds);
+  };
+
   // Placeholder component for 2D view
   const TwoDView = () => (
     <div className="flex flex-col items-center justify-center h-[600px] bg-gray-50 border rounded-lg">
@@ -392,6 +404,14 @@ const BomManagement = () => {
                         Export CSV
                       </Button>
                     </div>
+                  </div>
+                  
+                  {/* Template Management */}
+                  <div className="mb-4 border-b pb-4">
+                    <TemplateManager
+                      currentBomItems={rowData}
+                      onLoadTemplate={handleLoadTemplate}
+                    />
                   </div>
 
                   <div 

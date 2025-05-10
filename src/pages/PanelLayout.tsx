@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { 
@@ -10,6 +9,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { 
   ResizablePanelGroup,
   ResizablePanel,
@@ -19,7 +40,7 @@ import * as joint from 'jointjs';
 import { BomList } from "@/components/quote/bom/BomList";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { toast } from "sonner";
-import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2 } from 'lucide-react';
+import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2, Save, FolderOpen } from 'lucide-react';
 
 // Mock BOM items for demonstration
 const mockBomItems: BomItem[] = [
@@ -70,6 +91,27 @@ const mockBomItems: BomItem[] = [
   }
 ];
 
+// Define layout template interface
+interface LayoutTemplate {
+  id: string;
+  name: string;
+  category: string;
+  layout: any; // Joint.js serialized layout
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Template categories
+const DEFAULT_LAYOUT_CATEGORIES = [
+  "Main Distribution Boards",
+  "Sub Distribution Boards",
+  "Motor Control Centers",
+  "Lighting Panels",
+  "Power Panels",
+  "Control Panels",
+  "Other",
+];
+
 // Extend JointJS types for our use case
 declare module 'jointjs' {
   namespace dia {
@@ -103,6 +145,13 @@ const PanelLayout = () => {
   const graphRef = useRef<joint.dia.Graph | null>(null);
   const paperInstanceRef = useRef<joint.dia.Paper | null>(null);
   
+  // Template state
+  const [layoutTemplates, setLayoutTemplates] = useState<LayoutTemplate[]>([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateCategory, setNewTemplateCategory] = useState(DEFAULT_LAYOUT_CATEGORIES[0]);
+  const [customCategory, setCustomCategory] = useState("");
+
   // Filter BOM items
   const filteredBomItems = bomItems.filter(item => {
     const matchesSearch = 
@@ -176,6 +225,18 @@ const PanelLayout = () => {
     };
   }, [subProjectId]);
   
+  // Load templates from localStorage
+  useEffect(() => {
+    const savedTemplates = localStorage.getItem("layout-templates");
+    if (savedTemplates) {
+      try {
+        setLayoutTemplates(JSON.parse(savedTemplates));
+      } catch (error) {
+        console.error("Error loading layout templates:", error);
+      }
+    }
+  }, []);
+  
   // Save layout
   const saveLayout = () => {
     if (!graphRef.current) return;
@@ -183,7 +244,6 @@ const PanelLayout = () => {
     const serializedGraph = graphRef.current.toJSON();
     localStorage.setItem(`layout-${subProjectId}`, JSON.stringify(serializedGraph.cells));
     
-    // Fix the toast structure to match sonner's API
     toast("Your panel layout has been saved");
   };
   
@@ -194,7 +254,6 @@ const PanelLayout = () => {
     // Check if item is available
     const available = bomItem.quantity - (bomItem.inUse || 0);
     if (available <= 0) {
-      // Fix to use sonner toast API correctly - it doesn't take variant directly
       toast.error("This item is out of stock");
       return;
     }
@@ -246,6 +305,76 @@ const PanelLayout = () => {
     saveLayout();
   };
   
+  // Save layout as template
+  const saveLayoutTemplate = () => {
+    if (!graphRef.current) return;
+    if (!newTemplateName.trim()) {
+      toast.error("Please enter a template name");
+      return;
+    }
+    
+    const serializedGraph = graphRef.current.toJSON();
+    if (serializedGraph.cells.length === 0) {
+      toast.error("Cannot save an empty layout template");
+      return;
+    }
+    
+    const finalCategory = customCategory.trim() ? customCategory : newTemplateCategory;
+    
+    const newTemplate: LayoutTemplate = {
+      id: Date.now().toString(),
+      name: newTemplateName,
+      category: finalCategory,
+      layout: serializedGraph,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const updatedTemplates = [...layoutTemplates, newTemplate];
+    setLayoutTemplates(updatedTemplates);
+    localStorage.setItem("layout-templates", JSON.stringify(updatedTemplates));
+    
+    setShowSaveDialog(false);
+    setNewTemplateName("");
+    setNewTemplateCategory(DEFAULT_LAYOUT_CATEGORIES[0]);
+    setCustomCategory("");
+    
+    toast.success(`Layout template "${newTemplateName}" saved successfully`);
+  };
+  
+  // Load a template
+  const loadLayoutTemplate = (template: LayoutTemplate) => {
+    if (!graphRef.current) return;
+    
+    // Clear current graph
+    graphRef.current.clear();
+    
+    // Load cells from template
+    try {
+      const loadedCells = template.layout.cells.map((cell: any) => {
+        if (cell.type === 'standard.Rectangle') {
+          return new joint.shapes.standard.Rectangle(cell);
+        }
+        return null;
+      }).filter(Boolean);
+      
+      graphRef.current.addCells(loadedCells);
+      toast.success(`Template "${template.name}" loaded`);
+    } catch (e) {
+      console.error('Error loading template:', e);
+      toast.error("Failed to load template");
+    }
+  };
+  
+  // Group templates by category
+  const templatesByCategory = layoutTemplates.reduce<Record<string, LayoutTemplate[]>>((acc, template) => {
+    if (!acc[template.category]) {
+      acc[template.category] = [];
+    }
+    acc[template.category].push(template);
+    return acc;
+  }, {});
+  
   // Zoom controls
   const handleZoomIn = () => {
     if (!paperInstanceRef.current) return;
@@ -280,7 +409,42 @@ const PanelLayout = () => {
             {projectName && ` - ${projectName}`}
           </p>
         </div>
-        <Button onClick={saveLayout}>Save Layout</Button>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="flex items-center">
+            <Save className="h-4 w-4 mr-2" />
+            Save as Template
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Load Template
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto">
+              {Object.entries(templatesByCategory).length > 0 ? (
+                Object.entries(templatesByCategory).map(([category, categoryTemplates]) => (
+                  <React.Fragment key={category}>
+                    <div className="px-2 py-1.5 text-sm font-semibold bg-muted/50">{category}</div>
+                    {categoryTemplates.map(template => (
+                      <DropdownMenuItem 
+                        key={template.id}
+                        onClick={() => loadLayoutTemplate(template)}
+                      >
+                        {template.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </React.Fragment>
+                ))
+              ) : (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">No saved templates</div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button onClick={saveLayout}>Save Layout</Button>
+        </div>
       </div>
       
       <ResizablePanelGroup
@@ -391,6 +555,68 @@ const PanelLayout = () => {
           </Card>
         </ResizablePanel>
       </ResizablePanelGroup>
+      
+      {/* Save Template Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+            <DialogDescription>
+              Save the current panel layout as a reusable template.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="template-name">Template Name</Label>
+              <Input
+                id="template-name"
+                placeholder="Enter template name"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="template-category">Category</Label>
+              <Select 
+                value={newTemplateCategory} 
+                onValueChange={setNewTemplateCategory}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEFAULT_LAYOUT_CATEGORIES.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__custom__">+ Add Custom Category</SelectItem>
+                </SelectContent>
+              </Select>
+              {newTemplateCategory === "__custom__" && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter custom category"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveLayoutTemplate}>
+              Save Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
