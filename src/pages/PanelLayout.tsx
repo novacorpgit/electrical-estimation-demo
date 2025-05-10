@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { 
@@ -40,10 +41,10 @@ import * as joint from 'jointjs';
 import { BomList } from "@/components/quote/bom/BomList";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { toast } from "sonner";
-import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2, Save, FolderOpen } from 'lucide-react';
+import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2, Save, FolderOpen, RectangleHorizontal, Ruler } from 'lucide-react';
 
 // Mock BOM items for demonstration
-const mockBomItems: BomItem[] = [
+const mockBomItems = [
   {
     id: "item1",
     description: "MCB 32A",
@@ -112,6 +113,9 @@ const DEFAULT_LAYOUT_CATEGORIES = [
   "Other",
 ];
 
+// Grid configuration
+const GRID_SIZE = 10; // 10mm grid spacing
+
 // Extend JointJS types for our use case
 declare module 'jointjs' {
   namespace dia {
@@ -121,6 +125,7 @@ declare module 'jointjs' {
     
     interface Paper {
       remove(): void;
+      snapToGrid(point: { x: number, y: number }): { x: number, y: number };
     }
 
     // Add model property to CellView interface
@@ -128,6 +133,11 @@ declare module 'jointjs' {
       model: Cell;
     }
   }
+}
+
+interface RulerDimensions {
+  width: number;
+  height: number;
 }
 
 const PanelLayout = () => {
@@ -144,6 +154,9 @@ const PanelLayout = () => {
   const paperRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<joint.dia.Graph | null>(null);
   const paperInstanceRef = useRef<joint.dia.Paper | null>(null);
+  const [showRuler, setShowRuler] = useState(false);
+  const [rulerDimensions, setRulerDimensions] = useState<RulerDimensions>({ width: 0, height: 0 });
+  const [selectedEnclosure, setSelectedEnclosure] = useState<joint.dia.Cell | null>(null);
   
   // Template state
   const [layoutTemplates, setLayoutTemplates] = useState<LayoutTemplate[]>([]);
@@ -178,16 +191,92 @@ const PanelLayout = () => {
       model: graph,
       width: '100%',
       height: '100%',
-      gridSize: 20,
-      drawGrid: true,
+      gridSize: GRID_SIZE,
+      drawGrid: {
+        name: 'mesh',
+        args: {
+          color: '#ddd',
+          thickness: 1
+        }
+      },
       background: {
         color: '#F8F9FA'
-      }
+      },
+      snapLinks: true,
+      linkPinning: false,
+      embeddingMode: true
     });
     paperInstanceRef.current = paper;
+
+    // Enable snapping to grid
+    paper.on('cell:pointerdown', function(cellView) {
+      const cell = cellView.model;
+      cell.set('originalPosition', cell.position());
+    });
+
+    paper.on('cell:pointerup', function(cellView) {
+      const cell = cellView.model;
+      const position = cell.position();
+      
+      // Snap to grid
+      const snappedPosition = {
+        x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+        y: Math.round(position.y / GRID_SIZE) * GRID_SIZE
+      };
+      
+      cell.position(snappedPosition.x, snappedPosition.y);
+      
+      // Update ruler dimensions if this is the selected enclosure
+      if (selectedEnclosure && selectedEnclosure.id === cell.id) {
+        const size = cell.size();
+        setRulerDimensions({
+          width: size.width,
+          height: size.height
+        });
+      }
+    });
+
+    // Handle selection for ruler display
+    paper.on('element:pointerclick', function(elementView) {
+      const element = elementView.model;
+      if (element.get('type') === 'standard.Rectangle' && element.get('isEnclosure')) {
+        setSelectedEnclosure(element);
+        setShowRuler(true);
+        const size = element.size();
+        setRulerDimensions({
+          width: size.width,
+          height: size.height
+        });
+      }
+    });
+
+    // Handle blank click to deselect
+    paper.on('blank:pointerclick', function() {
+      setSelectedEnclosure(null);
+      setShowRuler(false);
+    });
+    
+    // Handle resizing of an enclosure
+    paper.on('element:resize', function(elementView) {
+      const element = elementView.model;
+      // Ensure the element size is snapped to the grid
+      const size = element.size();
+      const newSize = {
+        width: Math.round(size.width / GRID_SIZE) * GRID_SIZE,
+        height: Math.round(size.height / GRID_SIZE) * GRID_SIZE
+      };
+      element.resize(newSize.width, newSize.height);
+      
+      // Update ruler if this is the selected enclosure
+      if (selectedEnclosure && selectedEnclosure.id === element.id) {
+        setRulerDimensions({
+          width: newSize.width,
+          height: newSize.height
+        });
+      }
+    });
     
     // Load saved layout if available
-    // This would be implemented with actual backend persistence
     const savedLayout = localStorage.getItem(`layout-${subProjectId}`);
     if (savedLayout) {
       try {
@@ -204,17 +293,6 @@ const PanelLayout = () => {
         console.error('Error loading saved layout', e);
       }
     }
-    
-    // Setup drag-and-drop from BOM table to canvas
-    paper.on('cell:pointerup', function(cellView: joint.dia.CellView) {
-      // Access the model directly from cellView which now has the model property
-      const cell = cellView.model;
-      const bomItemId = cell.get('bomItemId');
-      
-      if (bomItemId) {
-        saveLayout();
-      }
-    });
     
     return () => {
       // Cleanup
@@ -303,6 +381,60 @@ const PanelLayout = () => {
     );
     
     saveLayout();
+  };
+
+  // Create an enclosure
+  const createEnclosure = () => {
+    if (!graphRef.current) return;
+
+    // Create a rectangle representing an enclosure
+    const enclosure = new joint.shapes.standard.Rectangle({
+      position: { x: 100, y: 100 },
+      size: { width: 200, height: 300 },
+      attrs: {
+        body: {
+          fill: 'rgba(200, 200, 200, 0.3)',
+          stroke: '#333',
+          strokeWidth: 2,
+          rx: 5, // rounded corners
+          ry: 5
+        },
+        label: {
+          text: 'Enclosure',
+          fill: '#333',
+          fontWeight: 'bold',
+          fontSize: 12,
+          textVerticalAnchor: 'top',
+          textAnchor: 'middle',
+          refY: 10
+        }
+      },
+      isEnclosure: true
+    });
+
+    // Make the enclosure resizable
+    enclosure.attr({
+      resizable: {
+        minWidth: GRID_SIZE,
+        minHeight: GRID_SIZE,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        orthogonalResize: true,
+        preserveAspectRatio: false
+      }
+    });
+
+    graphRef.current.addCell(enclosure);
+    setSelectedEnclosure(enclosure);
+    setShowRuler(true);
+    setRulerDimensions({
+      width: 200,
+      height: 300
+    });
+    
+    saveLayout();
+    
+    toast("Enclosure added. Click and drag to move. Resize using the handles.");
   };
   
   // Save layout as template
@@ -467,11 +599,38 @@ const PanelLayout = () => {
               <Button variant="outline" size="icon" onClick={handleResetView} title="Reset View">
                 <Undo2 className="h-4 w-4" />
               </Button>
+              <div className="h-6 border-l mx-1"></div>
+              <Button onClick={createEnclosure} className="flex items-center">
+                <RectangleHorizontal className="h-4 w-4 mr-2" />
+                Add Enclosure
+              </Button>
             </div>
-            <div 
-              ref={paperRef} 
-              className="flex-1 overflow-hidden"
-            ></div>
+            <div className="relative flex-1 overflow-hidden">
+              <div 
+                ref={paperRef} 
+                className="absolute inset-0"
+              ></div>
+              
+              {/* Ruler overlay */}
+              {showRuler && selectedEnclosure && (
+                <div className="absolute pointer-events-none z-10 left-0 top-0 right-0 bottom-0">
+                  <div className="ruler-overlay">
+                    <div className="absolute flex flex-col items-center left-1/2 transform -translate-x-1/2 top-4 bg-white/90 rounded px-3 py-1 shadow-md border text-sm">
+                      <div className="flex items-center">
+                        <Ruler className="h-4 w-4 mr-1 text-gray-500" />
+                        <span className="font-medium text-blue-600">{rulerDimensions.width} mm</span>
+                      </div>
+                    </div>
+                    <div className="absolute flex flex-col items-center left-4 top-1/2 transform -translate-y-1/2 bg-white/90 rounded px-3 py-1 shadow-md border text-sm">
+                      <div className="flex items-center">
+                        <Ruler className="h-4 w-4 mr-1 text-gray-500 transform rotate-90" />
+                        <span className="font-medium text-blue-600">{rulerDimensions.height} mm</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </ResizablePanel>
         

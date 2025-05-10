@@ -1,0 +1,98 @@
+
+/* Panel Layout Ruler Styles */
+.ruler-horizontal {
+  height: 20px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: white;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  z-index: 100;
+}
+
+.ruler-vertical {
+  width: 20px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: white;
+  border-right: 1px solid #ccc;
+  z-index: 100;
+}
+
+.ruler-tick {
+  position: absolute;
+  background: #333;
+}
+
+.ruler-horizontal .ruler-tick {
+  width: 1px;
+  height: 5px;
+  bottom: 0;
+}
+
+.ruler-vertical .ruler-tick {
+  height: 1px;
+  width: 5px;
+  right: 0;
+}
+
+.ruler-label {
+  position: absolute;
+  font-size: 9px;
+  color: #333;
+}
+
+.ruler-horizontal .ruler-label {
+  top: 2px;
+  transform: translateX(-50%);
+}
+
+.ruler-vertical .ruler-label {
+  transform: translateY(-50%);
+  left: 2px;
+}
+
+.ruler-dimension {
+  position: absolute;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  pointer-events: none;
+  z-index: 101;
+}
+
+/* Grid styling */
+.joint-paper {
+  background-color: #f5f5f5 !important;
+}
+
+.joint-paper .joint-grid {
+  pointer-events: none;
+}
+
+/* Selected element styling */
+.joint-element.selected rect {
+  stroke: #2563eb !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 5 !important;
+}
+
+/* Enclosure-specific styling */
+[data-is-enclosure="true"] {
+  cursor: move;
+}
+
+/* Resize handle styles */
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border: 1px solid #333;
+  border-radius: 50%;
+  z-index: 100;
+}

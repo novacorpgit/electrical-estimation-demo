@@ -68,6 +68,17 @@ export default {
 					row: 'hsl(var(--background))',
 					rowAlt: 'hsl(var(--muted)/30)',
 					border: 'hsl(var(--border))'
+				},
+				// Panel layout specific colors
+				ruler: {
+					bg: '#f0f0f0',
+					tick: '#999',
+					text: '#333',
+					border: '#ddd'
+				},
+				grid: {
+					line: '#ddd',
+					snap: '#2563eb'
 				}
 			},
 			borderRadius: {
@@ -84,6 +95,10 @@ export default {
 				'2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 				'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
 				'none': 'none',
+			},
+			spacing: {
+				// Adding 10mm grid spacing (approximately 40px in web units)
+				'10mm': '40px',
 			},
 			keyframes: {
 				'accordion-down': {
