@@ -1,7 +1,17 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import * as go from 'gojs';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  Panel,
+  NodeTypes,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { 
   Card, 
   CardContent, 
@@ -42,6 +52,10 @@ import { BomList } from "@/components/quote/bom/BomList";
 import { BomItem, BomItemCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { toast } from "sonner";
 import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2, Save, FolderOpen, RectangleHorizontal, Ruler } from 'lucide-react';
+
+// Import our custom nodes
+import ComponentNode from '@/components/panel-layout/ComponentNode';
+import EnclosureNode from '@/components/panel-layout/EnclosureNode';
 
 // Mock BOM items for demonstration
 const mockBomItems: BomItem[] = [
@@ -97,9 +111,21 @@ interface LayoutTemplate {
   id: string;
   name: string;
   category: string;
-  layout: go.Model;
+  layout: any;
   createdAt: string;
   updatedAt: string;
+}
+
+// Define Node types
+interface PanelNode {
+  id: string;
+  type: string;
+  position: { x: number, y: number };
+  data: any;
+  style?: React.CSSProperties;
+  width?: number;
+  height?: number;
+  selected?: boolean;
 }
 
 // Template categories
@@ -132,11 +158,14 @@ const PanelLayout = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
   
-  const diagramRef = useRef<HTMLDivElement>(null);
-  const diagramInstanceRef = useRef<go.Diagram | null>(null);
+  // React Flow state
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  
   const [showRuler, setShowRuler] = useState(false);
   const [rulerDimensions, setRulerDimensions] = useState<RulerDimensions>({ width: 0, height: 0 });
-  const [selectedEnclosure, setSelectedEnclosure] = useState<go.Node | null>(null);
+  const [selectedEnclosure, setSelectedEnclosure] = useState<PanelNode | null>(null);
   
   // Template state
   const [layoutTemplates, setLayoutTemplates] = useState<LayoutTemplate[]>([]);
@@ -146,7 +175,13 @@ const PanelLayout = () => {
   const [customCategory, setCustomCategory] = useState("");
   
   // Scale for zoom operations
-  const [scale, setScale] = useState(1);
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+
+  // Define the custom node types
+  const nodeTypes: NodeTypes = {
+    component: ComponentNode,
+    enclosure: EnclosureNode
+  };
 
   // Filter BOM items
   const filteredBomItems = bomItems.filter(item => {
@@ -160,147 +195,19 @@ const PanelLayout = () => {
     return matchesSearch;
   });
 
-  // Initialize GoJS
+  // Load saved layout on component mount
   useEffect(() => {
-    if (!diagramRef.current) return;
-    
-    // Create a new diagram
-    const diagram = new go.Diagram(diagramRef.current, {
-      "undoManager.isEnabled": true,
-      "grid.visible": true,
-      "grid.gridCellSize": new go.Size(GRID_SIZE, GRID_SIZE),
-      "grid.background": "transparent",
-      "draggingTool.gridSnapCellSpot": go.Spot.Center,
-      "resizingTool.gridSnapCellSpot": go.Spot.Center,
-      "allowDrop": true,
-      "initialContentAlignment": go.Spot.Center,
-      "animationManager.isEnabled": false,
-    });
-    
-    // Define the node template for components
-    diagram.nodeTemplateMap.add("component", 
-      new go.Node("Auto")
-        .bind(new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify))
-        .add(
-          new go.Shape("Rectangle")
-            .bind("fill", "color")
-            .bind("stroke", "black")
-            .bind("strokeWidth", 1)
-        )
-        .add(
-          new go.TextBlock()
-            .bind("text", "description")
-            .bind("stroke", "white")
-            .bind("font", "bold 10px sans-serif")
-            .bind(new go.Binding("width", "width"))
-            .bind(new go.Binding("height", "height"))
-        )
-    );
-    
-    // Define the node template for enclosures
-    diagram.nodeTemplateMap.add("enclosure", 
-      new go.Node("Auto")
-        .bind(new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify))
-        .bind(new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify))
-        .resizable(true)
-        .resizeAdornmentTemplate(
-          new go.Adornment("Spot")
-            .add(new go.Placeholder())
-            .add(new go.Shape("Rectangle")
-              .alignment(go.Spot.TopLeft)
-              .cursor("nw-resize")
-            )
-            .add(new go.Shape("Rectangle")
-              .alignment(go.Spot.TopRight)
-              .cursor("ne-resize")
-            )
-            .add(new go.Shape("Rectangle")
-              .alignment(go.Spot.BottomLeft)
-              .cursor("sw-resize")
-            )
-            .add(new go.Shape("Rectangle")
-              .alignment(go.Spot.BottomRight)
-              .cursor("se-resize")
-            )
-        )
-        .add(
-          new go.Shape("Rectangle")
-            .bind("fill", "rgba(200, 200, 200, 0.3)")
-            .bind("stroke", "#333")
-            .bind("strokeWidth", 2)
-            .bind("strokeDashArray", [1, 0])
-            .bind(new go.Binding("width", "width"))
-            .bind(new go.Binding("height", "height"))
-        )
-        .add(
-          new go.TextBlock()
-            .bind("text", "text")
-            .bind("stroke", "#333")
-            .bind("font", "bold 12px sans-serif")
-        )
-    );
-    
-    // Handle node selection
-    diagram.addDiagramListener("SelectionChanged", (e) => {
-      const diagram = e.diagram;
-      const selectedNode = diagram?.selection.first();
-      
-      if (selectedNode && selectedNode.category === "enclosure") {
-        setSelectedEnclosure(selectedNode);
-        setShowRuler(true);
-        const bounds = selectedNode.actualBounds;
-        setRulerDimensions({
-          width: bounds.width,
-          height: bounds.height
-        });
-      } else {
-        setSelectedEnclosure(null);
-        setShowRuler(false);
-      }
-    });
-    
-    // Handle node resizing
-    diagram.addDiagramListener("SelectionResized", (e) => {
-      const diagram = e.diagram;
-      const selectedNode = diagram?.selection.first();
-      
-      if (selectedNode && selectedNode.category === "enclosure") {
-        const bounds = selectedNode.actualBounds;
-        // Snap to grid
-        const width = Math.round(bounds.width / GRID_SIZE) * GRID_SIZE;
-        const height = Math.round(bounds.height / GRID_SIZE) * GRID_SIZE;
-        selectedNode.resizeObject.desiredSize = new go.Size(width, height);
-        
-        // Update ruler dimensions
-        setRulerDimensions({
-          width: width,
-          height: height
-        });
-      }
-    });
-    
-    // Save instance ref
-    diagramInstanceRef.current = diagram;
-    
-    // Load saved layout if available
     const savedLayout = localStorage.getItem(`layout-${subProjectId}`);
     if (savedLayout) {
       try {
-        const model = new go.GraphLinksModel();
-        model.nodeDataArray = JSON.parse(savedLayout);
-        diagram.model = model;
+        const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedLayout);
+        setNodes(savedNodes || []);
+        setEdges(savedEdges || []);
       } catch (e) {
         console.error('Error loading saved layout', e);
       }
     }
-    
-    return () => {
-      // Cleanup
-      if (diagramInstanceRef.current) {
-        diagramInstanceRef.current.div = null;
-      }
-    };
-  }, [subProjectId]);
+  }, [subProjectId, setNodes, setEdges]);
   
   // Load templates from localStorage
   useEffect(() => {
@@ -314,20 +221,33 @@ const PanelLayout = () => {
     }
   }, []);
   
+  // Handle node selection
+  const onNodeClick = useCallback((event: React.MouseEvent, node: PanelNode) => {
+    if (node.type === 'enclosure') {
+      setSelectedEnclosure(node);
+      setShowRuler(true);
+      setRulerDimensions({
+        width: node.style?.width as number || 0,
+        height: node.style?.height as number || 0,
+      });
+    } else {
+      setSelectedEnclosure(null);
+      setShowRuler(false);
+    }
+  }, []);
+
   // Save layout
-  const saveLayout = () => {
-    if (!diagramInstanceRef.current) return;
+  const saveLayout = useCallback(() => {
+    if (!reactFlowInstance) return;
     
-    const nodeDataArray = diagramInstanceRef.current.model.toJson();
-    localStorage.setItem(`layout-${subProjectId}`, nodeDataArray);
+    const flow = reactFlowInstance.toObject();
+    localStorage.setItem(`layout-${subProjectId}`, JSON.stringify(flow));
     
     toast("Your panel layout has been saved");
-  };
+  }, [reactFlowInstance, subProjectId]);
   
   // Create a component element on the canvas
-  const createComponentElement = (bomItem: BomItem) => {
-    if (!diagramInstanceRef.current) return;
-    
+  const createComponentElement = useCallback((bomItem: BomItem) => {
     // Check if item is available
     const available = bomItem.quantity - (bomItem.inUse || 0);
     if (available <= 0) {
@@ -347,23 +267,24 @@ const PanelLayout = () => {
     
     const color = categoryColors[bomItem.category] || categoryColors.other;
     
-    // Create component data
-    const newComponent = {
-      key: `component-${Date.now()}`,
-      category: "component",
-      loc: "100 100",
-      width: 80,
-      height: 40,
-      color: color,
-      description: bomItem.description,
-      bomItemId: bomItem.id
+    // Create component node
+    const newNode: PanelNode = {
+      id: `component-${Date.now()}`,
+      type: 'component',
+      position: { x: 100, y: 100 },
+      data: {
+        label: bomItem.description,
+        color: color,
+        bomItemId: bomItem.id
+      },
+      style: {
+        width: 80,
+        height: 40,
+        backgroundColor: color
+      }
     };
     
-    // Add component to the model
-    const model = diagramInstanceRef.current.model;
-    model.startTransaction("add component");
-    model.addNodeData(newComponent);
-    model.commitTransaction("add component");
+    setNodes(nodes => [...nodes, newNode]);
     
     // Update BOM item to show it's in use
     setBomItems(items => 
@@ -375,58 +296,46 @@ const PanelLayout = () => {
     );
     
     saveLayout();
-  };
+  }, [setNodes, saveLayout]);
 
   // Create an enclosure
-  const createEnclosure = () => {
-    if (!diagramInstanceRef.current) return;
-
-    // Create enclosure data
-    const newEnclosure = {
-      key: `enclosure-${Date.now()}`,
-      category: "enclosure",
-      loc: "100 100",
-      size: "200 300",
-      width: 200,
-      height: 300,
-      text: "Enclosure",
-      isEnclosure: true
-    };
-    
-    // Add enclosure to the model
-    const model = diagramInstanceRef.current.model;
-    model.startTransaction("add enclosure");
-    model.addNodeData(newEnclosure);
-    model.commitTransaction("add enclosure");
-    
-    // Find the node we just added
-    const enclosureNode = diagramInstanceRef.current.findNodeForKey(newEnclosure.key);
-    if (enclosureNode) {
-      // Select the new enclosure
-      diagramInstanceRef.current.select(enclosureNode);
-      setSelectedEnclosure(enclosureNode);
-      setShowRuler(true);
-      setRulerDimensions({
+  const createEnclosure = useCallback(() => {
+    const newNode: PanelNode = {
+      id: `enclosure-${Date.now()}`,
+      type: 'enclosure',
+      position: { x: 100, y: 100 },
+      data: {
+        label: "Enclosure"
+      },
+      style: {
         width: 200,
         height: 300
-      });
-    }
+      }
+    };
+    
+    setNodes(nodes => [...nodes, newNode]);
+    setSelectedEnclosure(newNode);
+    setShowRuler(true);
+    setRulerDimensions({
+      width: 200,
+      height: 300
+    });
     
     saveLayout();
     
     toast("Enclosure added. Click and drag to move. Resize using the handles.");
-  };
+  }, [setNodes, saveLayout]);
   
   // Save layout as template
-  const saveLayoutTemplate = () => {
-    if (!diagramInstanceRef.current) return;
+  const saveLayoutTemplate = useCallback(() => {
+    if (!reactFlowInstance) return;
     if (!newTemplateName.trim()) {
       toast.error("Please enter a template name");
       return;
     }
     
-    const model = diagramInstanceRef.current.model;
-    if (model.nodeDataArray.length === 0) {
+    const flow = reactFlowInstance.toObject();
+    if (!flow.nodes.length) {
       toast.error("Cannot save an empty layout template");
       return;
     }
@@ -437,7 +346,7 @@ const PanelLayout = () => {
       id: Date.now().toString(),
       name: newTemplateName,
       category: finalCategory,
-      layout: model,
+      layout: flow,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -452,21 +361,20 @@ const PanelLayout = () => {
     setCustomCategory("");
     
     toast.success(`Layout template "${newTemplateName}" saved successfully`);
-  };
+  }, [reactFlowInstance, newTemplateName, newTemplateCategory, customCategory, layoutTemplates]);
   
   // Load a template
-  const loadLayoutTemplate = (template: LayoutTemplate) => {
-    if (!diagramInstanceRef.current) return;
-    
-    // Clear current model and load from template
+  const loadLayoutTemplate = useCallback((template: LayoutTemplate) => {
     try {
-      diagramInstanceRef.current.model = template.layout;
+      const { nodes: templateNodes, edges: templateEdges } = template.layout;
+      setNodes(templateNodes || []);
+      setEdges(templateEdges || []);
       toast.success(`Template "${template.name}" loaded`);
     } catch (e) {
       console.error('Error loading template:', e);
       toast.error("Failed to load template");
     }
-  };
+  }, [setNodes, setEdges]);
   
   // Group templates by category
   const templatesByCategory = layoutTemplates.reduce<Record<string, LayoutTemplate[]>>((acc, template) => {
@@ -477,31 +385,21 @@ const PanelLayout = () => {
     return acc;
   }, {});
   
-  // Zoom controls
-  const handleZoomIn = () => {
-    if (!diagramInstanceRef.current) return;
-    const newScale = scale * 1.2;
-    diagramInstanceRef.current.scale = newScale;
-    setScale(newScale);
-  };
-  
-  const handleZoomOut = () => {
-    if (!diagramInstanceRef.current) return;
-    const newScale = scale / 1.2;
-    diagramInstanceRef.current.scale = newScale;
-    setScale(newScale);
-  };
-  
-  const handleResetView = () => {
-    if (!diagramInstanceRef.current) return;
-    diagramInstanceRef.current.scale = 1;
-    setScale(1);
-  };
-  
-  const handleToggleGrid = () => {
-    if (!diagramInstanceRef.current) return;
-    diagramInstanceRef.current.grid.visible = !diagramInstanceRef.current.grid.visible;
-  };
+  // On node resize end
+  const onNodeResize = useCallback((node: PanelNode) => {
+    if (node.type === 'enclosure') {
+      setRulerDimensions({
+        width: node.style?.width as number || 0,
+        height: node.style?.height as number || 0
+      });
+    }
+  }, []);
+
+  // Handle pane click to deselect
+  const onPaneClick = useCallback(() => {
+    setSelectedEnclosure(null);
+    setShowRuler(false);
+  }, []);
 
   return (
     <div className="container mx-auto py-6">
@@ -555,20 +453,17 @@ const PanelLayout = () => {
         direction="vertical"
         className="min-h-[600px] border rounded-lg"
       >
-        {/* GoJS Canvas Panel */}
+        {/* React Flow Canvas Panel */}
         <ResizablePanel defaultSize={60} minSize={30}>
           <div className="h-full flex flex-col">
             <div className="bg-muted p-2 flex items-center space-x-2">
-              <Button variant="outline" size="icon" onClick={handleZoomIn} title="Zoom In">
+              <Button variant="outline" size="icon" onClick={() => reactFlowInstance?.zoomIn()} title="Zoom In">
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleZoomOut} title="Zoom Out">
+              <Button variant="outline" size="icon" onClick={() => reactFlowInstance?.zoomOut()} title="Zoom Out">
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleToggleGrid} title="Toggle Grid">
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleResetView} title="Reset View">
+              <Button variant="outline" size="icon" onClick={() => reactFlowInstance?.fitView()} title="Reset View">
                 <Undo2 className="h-4 w-4" />
               </Button>
               <div className="h-6 border-l mx-1"></div>
@@ -577,31 +472,46 @@ const PanelLayout = () => {
                 Add Enclosure
               </Button>
             </div>
-            <div className="relative flex-1 overflow-hidden">
-              <div 
-                ref={diagramRef} 
-                className="diagram-component absolute inset-0"
-              ></div>
-              
-              {/* Ruler overlay */}
-              {showRuler && selectedEnclosure && (
-                <div className="absolute pointer-events-none z-10 left-0 top-0 right-0 bottom-0">
-                  <div className="ruler-overlay">
-                    <div className="absolute flex flex-col items-center left-1/2 transform -translate-x-1/2 top-4 bg-white/90 rounded px-3 py-1 shadow-md border text-sm">
-                      <div className="flex items-center">
-                        <Ruler className="h-4 w-4 mr-1 text-gray-500" />
-                        <span className="font-medium text-blue-600">{rulerDimensions.width} mm</span>
-                      </div>
+            <div className="relative flex-1 overflow-hidden" ref={reactFlowWrapper}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                nodeTypes={nodeTypes}
+                onInit={setReactFlowInstance}
+                onNodeClick={onNodeClick}
+                onPaneClick={onPaneClick}
+                snapToGrid={true}
+                snapGrid={[GRID_SIZE, GRID_SIZE]}
+                nodesDraggable={true}
+                nodesConnectable={false}
+                fitView
+              >
+                <Panel position="top-right">
+                  <Controls />
+                </Panel>
+                <MiniMap />
+                <Background 
+                  gap={GRID_SIZE} 
+                  size={1}
+                  color="#ddd"
+                />
+                
+                {/* Dimension indicators for selected enclosure */}
+                {showRuler && selectedEnclosure && (
+                  <>
+                    <div className="dimension-indicator dimension-indicator-top">
+                      <Ruler className="h-4 w-4" />
+                      <span>{rulerDimensions.width} mm</span>
                     </div>
-                    <div className="absolute flex flex-col items-center left-4 top-1/2 transform -translate-y-1/2 bg-white/90 rounded px-3 py-1 shadow-md border text-sm">
-                      <div className="flex items-center">
-                        <Ruler className="h-4 w-4 mr-1 text-gray-500 transform rotate-90" />
-                        <span className="font-medium text-blue-600">{rulerDimensions.height} mm</span>
-                      </div>
+                    <div className="dimension-indicator dimension-indicator-left">
+                      <Ruler className="h-4 w-4 transform rotate-90" />
+                      <span>{rulerDimensions.height} mm</span>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+              </ReactFlow>
             </div>
           </div>
         </ResizablePanel>
