@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { Navigation } from "@/components/Navigation";
 import { ClientsView } from "@/components/ClientsView";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CreateClientForm } from "@/components/CreateClientForm";
 import { Plus, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Mock client data with contacts
 const mockClients = [
@@ -121,23 +121,26 @@ const ClientsPage = () => {
         <ClientsView />
       </main>
 
-      {/* Create Client Dialog */}
-      <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create New Client</DialogTitle>
-          </DialogHeader>
-          <CreateClientForm 
-            onCancel={() => setShowCreateClient(false)} 
-            onSuccess={() => {
-              toast({
-                title: "Client Created",
-                description: "New client has been created successfully."
-              });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Create Client Sheet - Side drawer instead of Dialog */}
+      <Sheet open={showCreateClient} onOpenChange={setShowCreateClient}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Client</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <CreateClientForm 
+              onCancel={() => setShowCreateClient(false)} 
+              onSuccess={() => {
+                toast({
+                  title: "Client Created",
+                  description: "New client has been created successfully."
+                });
+                setShowCreateClient(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Quick Add Contact Dialog */}
       <Dialog open={showQuickContact} onOpenChange={setShowQuickContact}>

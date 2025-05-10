@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CreateClientForm } from "./CreateClientForm";
 import { ClientsTable, Client } from "./client/ClientsTable";
 
@@ -143,21 +144,20 @@ export const ClientsView = () => {
         </CardContent>
       </Card>
 
-      {showCreateClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>Create New Client</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CreateClientForm 
-                onCancel={() => setShowCreateClient(false)} 
-                onSuccess={() => {}} 
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Replace the fixed dialog with a Sheet */}
+      <Sheet open={showCreateClient} onOpenChange={setShowCreateClient}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Client</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <CreateClientForm 
+              onCancel={() => setShowCreateClient(false)} 
+              onSuccess={() => setShowCreateClient(false)} 
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
