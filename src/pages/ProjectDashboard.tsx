@@ -248,11 +248,8 @@ const ProjectDashboard = () => {
             <Badge className={getStatusColor(project.status)}>
               {project.status}
             </Badge>
-            <Badge className={getPriorityColor(project.priority)}>
-              {project.priority}
-            </Badge>
             
-            {/* Quote generation button */}
+            {/* Quote generation button - Moved to be right after status badge */}
             <Button 
               variant="outline" 
               size="sm" 
@@ -262,6 +259,10 @@ const ProjectDashboard = () => {
               <FileSpreadsheet className="h-4 w-4 mr-1" />
               Generate Quote
             </Button>
+            
+            <Badge className={getPriorityColor(project.priority)}>
+              {project.priority}
+            </Badge>
             
             {/* Add download button when quotation is complete */}
             {isQuotationComplete && <Button variant="outline" size="sm" className="flex items-center bg-green-50 text-green-700 border-green-200 hover:bg-green-100" onClick={handleDownloadQuotation}>
