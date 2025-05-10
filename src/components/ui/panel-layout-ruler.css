@@ -65,87 +65,34 @@
   z-index: 101;
 }
 
-/* React Flow styling */
-.react-flow__node {
-  padding: 10px;
-  border-radius: 3px;
-  width: 150px;
-  font-size: 12px;
-  color: #222;
-  text-align: center;
-  border-width: 1px;
-  border-style: solid;
+/* Grid styling */
+.joint-paper {
+  background-color: #f5f5f5 !important;
 }
 
-.react-flow__node-component {
-  background-color: #fff;
-  border-color: #1a192b;
-}
-
-.react-flow__node-enclosure {
-  background-color: rgba(200, 200, 200, 0.3);
-  border-color: #333;
-  border-style: dashed;
-  border-width: 2px;
-  width: 200px;
-  height: 300px;
-}
-
-.react-flow__handle {
-  width: 8px;
-  height: 8px;
-  background-color: #784be8;
-}
-
-.react-flow__controls {
-  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);
-}
-
-.react-flow__controls button {
-  background-color: #fefefe;
-  border-bottom: 1px solid #eee;
-  box-sizing: content-box;
-}
-
-.react-flow__minimap {
-  background-color: #f7f7f7;
+.joint-paper .joint-grid {
+  pointer-events: none;
 }
 
 /* Selected element styling */
-.react-flow__node.selected {
-  border-color: #2563eb;
-  border-width: 2px;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+.joint-element.selected rect {
+  stroke: #2563eb !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 5 !important;
 }
 
-/* Grid background */
-.react-flow__background {
-  background-size: 10px 10px;
+/* Enclosure-specific styling */
+[data-is-enclosure="true"] {
+  cursor: move;
 }
 
-/* Dimension indicators */
-.dimension-indicator {
+/* Resize handle styles */
+.resize-handle {
   position: absolute;
+  width: 8px;
+  height: 8px;
   background: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  z-index: 10;
-}
-
-.dimension-indicator-top {
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.dimension-indicator-left {
-  left: -40px;
-  top: 50%;
-  transform: translateY(-50%);
+  border: 1px solid #333;
+  border-radius: 50%;
+  z-index: 100;
 }
