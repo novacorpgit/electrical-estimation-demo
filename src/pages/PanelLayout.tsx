@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { 
@@ -136,13 +137,28 @@ declare module 'jointjs' {
       drawGrid(): void;
     }
 
-    // Add model property to CellView interface
     interface CellView {
       model: Cell;
     }
 
     interface ElementView extends CellView {
       model: Cell;
+    }
+    
+    // Add explicit Rectangle type
+    namespace shapes {
+      namespace standard {
+        interface Rectangle extends dia.Element {
+          // Ensure compatibility with our Cell interface
+          get(attribute: string): any;
+          set(key: string, value: any): this;
+          position(): { x: number, y: number };
+          position(x: number, y: number): this;
+          position(position: { x: number, y: number }): this;
+          size(): { width: number, height: number };
+          resize(width: number, height: number): this;
+        }
+      }
     }
   }
 }
@@ -381,7 +397,7 @@ const PanelLayout = () => {
       bomItemId: bomItem.id
     });
     
-    graphRef.current.addCell(rect);
+    graphRef.current.addCells([rect]);
     
     // Update BOM item to show it's in use
     setBomItems(items => 
@@ -436,8 +452,9 @@ const PanelLayout = () => {
       }
     });
 
-    graphRef.current.addCell(enclosure);
-    setSelectedEnclosure(enclosure);
+    // Use addCells with an array to fix type compatibility
+    graphRef.current.addCells([enclosure as unknown as joint.dia.Cell]);
+    setSelectedEnclosure(enclosure as unknown as joint.dia.Cell);
     setShowRuler(true);
     setRulerDimensions({
       width: 200,
