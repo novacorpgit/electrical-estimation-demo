@@ -144,24 +144,14 @@ declare module 'jointjs' {
     interface ElementView extends CellView {
       model: Cell;
     }
-    
-    // Add explicit Rectangle type
-    namespace shapes {
-      namespace standard {
-        interface Rectangle extends dia.Element {
-          // Ensure compatibility with our Cell interface
-          get(attribute: string): any;
-          set(key: string, value: any): this;
-          position(): { x: number, y: number };
-          position(x: number, y: number): this;
-          position(position: { x: number, y: number }): this;
-          size(): { width: number, height: number };
-          resize(width: number, height: number): this;
-        }
-      }
-    }
   }
 }
+
+// Type for our Rectangle that's compatible with JointJS
+type JointRectangle = joint.dia.Cell & {
+  resize(width: number, height: number): joint.dia.Cell;
+  size(): { width: number, height: number };
+};
 
 interface RulerDimensions {
   width: number;
@@ -397,7 +387,8 @@ const PanelLayout = () => {
       bomItemId: bomItem.id
     });
     
-    graphRef.current.addCells([rect]);
+    // Always add elements as an array to graphs
+    graphRef.current.addCells([rect as unknown as joint.dia.Cell]);
     
     // Update BOM item to show it's in use
     setBomItems(items => 
@@ -452,7 +443,7 @@ const PanelLayout = () => {
       }
     });
 
-    // Use addCells with an array to fix type compatibility
+    // Always use addCells with an array to fix type compatibility
     graphRef.current.addCells([enclosure as unknown as joint.dia.Cell]);
     setSelectedEnclosure(enclosure as unknown as joint.dia.Cell);
     setShowRuler(true);
