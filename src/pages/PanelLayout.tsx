@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { 
@@ -39,16 +38,16 @@ import {
 } from "@/components/ui/resizable";
 import * as joint from 'jointjs';
 import { BomList } from "@/components/quote/bom/BomList";
-import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
+import { BomItem, BomItemCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { toast } from "sonner";
 import { Search, ZoomIn, ZoomOut, Grid3X3, Undo2, Save, FolderOpen, RectangleHorizontal, Ruler } from 'lucide-react';
 
 // Mock BOM items for demonstration
-const mockBomItems = [
+const mockBomItems: BomItem[] = [
   {
     id: "item1",
     description: "MCB 32A",
-    category: "circuit-breakers",
+    category: "circuit-breakers" as BomItemCategory,
     quantity: 10,
     unitCost: 45.99,
     totalCost: 459.90,
@@ -57,7 +56,7 @@ const mockBomItems = [
   {
     id: "item2",
     description: "RCCB 25A",
-    category: "circuit-breakers",
+    category: "circuit-breakers" as BomItemCategory,
     quantity: 5,
     unitCost: 65.50,
     totalCost: 327.50,
@@ -66,7 +65,7 @@ const mockBomItems = [
   {
     id: "item3",
     description: "Power Supply 24V",
-    category: "power-supplies",
+    category: "power-supplies" as BomItemCategory,
     quantity: 3,
     unitCost: 120.00,
     totalCost: 360.00,
@@ -75,7 +74,7 @@ const mockBomItems = [
   {
     id: "item4",
     description: "Panel Enclosure 800x600",
-    category: "enclosures",
+    category: "enclosures" as BomItemCategory,
     quantity: 1,
     unitCost: 350.00,
     totalCost: 350.00,
@@ -84,7 +83,7 @@ const mockBomItems = [
   {
     id: "item5",
     description: "DIN Rail 35mm (1m)",
-    category: "accessories",
+    category: "accessories" as BomItemCategory,
     quantity: 5,
     unitCost: 8.75,
     totalCost: 43.75,
@@ -121,15 +120,28 @@ declare module 'jointjs' {
   namespace dia {
     interface Cell {
       get(attribute: string): any;
+      set(key: string, value: any): this;
+      position(): { x: number, y: number };
+      position(x: number, y: number): this;
+      position(position: { x: number, y: number }): this;
+      size(): { width: number, height: number };
+      resize(width: number, height: number): this;
     }
     
     interface Paper {
       remove(): void;
       snapToGrid(point: { x: number, y: number }): { x: number, y: number };
+      scale(): { sx: number, sy: number };
+      scale(sx: number, sy: number): void;
+      drawGrid(): void;
     }
 
     // Add model property to CellView interface
     interface CellView {
+      model: Cell;
+    }
+
+    interface ElementView extends CellView {
       model: Cell;
     }
   }
