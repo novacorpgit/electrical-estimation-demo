@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+import * as go from 'gojs';
 import { 
   Card, 
   CardContent, 
@@ -37,7 +38,6 @@ import {
   ResizablePanel,
   ResizableHandle 
 } from "@/components/ui/resizable";
-import * as joint from 'jointjs';
 import { BomList } from "@/components/quote/bom/BomList";
 import { BomItem, BomItemCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { toast } from "sonner";
@@ -97,7 +97,7 @@ interface LayoutTemplate {
   id: string;
   name: string;
   category: string;
-  layout: any; // Joint.js serialized layout
+  layout: go.Model;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,43 +116,6 @@ const DEFAULT_LAYOUT_CATEGORIES = [
 // Grid configuration
 const GRID_SIZE = 10; // 10mm grid spacing
 
-// Extend JointJS types for our use case
-declare module 'jointjs' {
-  namespace dia {
-    interface Cell {
-      get(attribute: string): any;
-      set(key: string, value: any): this;
-      position(): { x: number, y: number };
-      position(x: number, y: number): this;
-      position(position: { x: number, y: number }): this;
-      size(): { width: number, height: number };
-      resize(width: number, height: number): this;
-    }
-    
-    interface Paper {
-      remove(): void;
-      snapToGrid(point: { x: number, y: number }): { x: number, y: number };
-      scale(): { sx: number, sy: number };
-      scale(sx: number, sy: number): void;
-      drawGrid(): void;
-    }
-
-    interface CellView {
-      model: Cell;
-    }
-
-    interface ElementView extends CellView {
-      model: Cell;
-    }
-  }
-}
-
-// Type for our Rectangle that's compatible with JointJS
-type JointRectangle = joint.dia.Cell & {
-  resize(width: number, height: number): joint.dia.Cell;
-  size(): { width: number, height: number };
-};
-
 interface RulerDimensions {
   width: number;
   height: number;
@@ -169,12 +132,11 @@ const PanelLayout = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
   
-  const paperRef = useRef<HTMLDivElement>(null);
-  const graphRef = useRef<joint.dia.Graph | null>(null);
-  const paperInstanceRef = useRef<joint.dia.Paper | null>(null);
+  const diagramRef = useRef<HTMLDivElement>(null);
+  const diagramInstanceRef = useRef<go.Diagram | null>(null);
   const [showRuler, setShowRuler] = useState(false);
   const [rulerDimensions, setRulerDimensions] = useState<RulerDimensions>({ width: 0, height: 0 });
-  const [selectedEnclosure, setSelectedEnclosure] = useState<joint.dia.Cell | null>(null);
+  const [selectedEnclosure, setSelectedEnclosure] = useState<go.Node | null>(null);
   
   // Template state
   const [layoutTemplates, setLayoutTemplates] = useState<LayoutTemplate[]>([]);
@@ -182,6 +144,9 @@ const PanelLayout = () => {
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateCategory, setNewTemplateCategory] = useState(DEFAULT_LAYOUT_CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState("");
+  
+  // Scale for zoom operations
+  const [scale, setScale] = useState(1);
 
   // Filter BOM items
   const filteredBomItems = bomItems.filter(item => {
@@ -195,118 +160,135 @@ const PanelLayout = () => {
     return matchesSearch;
   });
 
-  // Initialize JointJS
+  // Initialize GoJS
   useEffect(() => {
-    if (!paperRef.current) return;
+    if (!diagramRef.current) return;
     
-    // Create graph
-    const graph = new joint.dia.Graph();
-    graphRef.current = graph;
+    // Create a new diagram
+    const diagram = new go.Diagram(diagramRef.current, {
+      "undoManager.isEnabled": true,
+      "grid.visible": true,
+      "grid.gridCellSize": new go.Size(GRID_SIZE, GRID_SIZE),
+      "grid.background": "transparent",
+      "draggingTool.gridSnapCellSpot": go.Spot.Center,
+      "resizingTool.gridSnapCellSpot": go.Spot.Center,
+      "allowDrop": true,
+      "initialContentAlignment": go.Spot.Center,
+      "animationManager.isEnabled": false,
+    });
     
-    // Create paper (the canvas)
-    const paper = new joint.dia.Paper({
-      el: paperRef.current,
-      model: graph,
-      width: '100%',
-      height: '100%',
-      gridSize: GRID_SIZE,
-      drawGrid: {
-        name: 'mesh',
-        args: {
-          color: '#ddd',
-          thickness: 1
-        }
-      },
-      background: {
-        color: '#F8F9FA'
-      },
-      snapLinks: true,
-      linkPinning: false,
-      embeddingMode: true
-    });
-    paperInstanceRef.current = paper;
-
-    // Enable snapping to grid
-    paper.on('cell:pointerdown', function(cellView) {
-      const cell = cellView.model;
-      cell.set('originalPosition', cell.position());
-    });
-
-    paper.on('cell:pointerup', function(cellView) {
-      const cell = cellView.model;
-      const position = cell.position();
+    // Define the node template for components
+    diagram.nodeTemplateMap.add("component", 
+      new go.Node("Auto")
+        .bind(new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify))
+        .add(
+          new go.Shape("Rectangle")
+            .bind("fill", "color")
+            .bind("stroke", "black")
+            .bind("strokeWidth", 1)
+        )
+        .add(
+          new go.TextBlock()
+            .bind("text", "description")
+            .bind("stroke", "white")
+            .bind("font", "bold 10px sans-serif")
+            .bind(new go.Binding("width", "width"))
+            .bind(new go.Binding("height", "height"))
+        )
+    );
+    
+    // Define the node template for enclosures
+    diagram.nodeTemplateMap.add("enclosure", 
+      new go.Node("Auto")
+        .bind(new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify))
+        .bind(new go.Binding("desiredSize", "size", go.Size.parse).makeTwoWay(go.Size.stringify))
+        .resizable(true)
+        .resizeAdornmentTemplate(
+          new go.Adornment("Spot")
+            .add(new go.Placeholder())
+            .add(new go.Shape("Rectangle")
+              .alignment(go.Spot.TopLeft)
+              .cursor("nw-resize")
+            )
+            .add(new go.Shape("Rectangle")
+              .alignment(go.Spot.TopRight)
+              .cursor("ne-resize")
+            )
+            .add(new go.Shape("Rectangle")
+              .alignment(go.Spot.BottomLeft)
+              .cursor("sw-resize")
+            )
+            .add(new go.Shape("Rectangle")
+              .alignment(go.Spot.BottomRight)
+              .cursor("se-resize")
+            )
+        )
+        .add(
+          new go.Shape("Rectangle")
+            .bind("fill", "rgba(200, 200, 200, 0.3)")
+            .bind("stroke", "#333")
+            .bind("strokeWidth", 2)
+            .bind("strokeDashArray", [1, 0])
+            .bind(new go.Binding("width", "width"))
+            .bind(new go.Binding("height", "height"))
+        )
+        .add(
+          new go.TextBlock()
+            .bind("text", "text")
+            .bind("stroke", "#333")
+            .bind("font", "bold 12px sans-serif")
+        )
+    );
+    
+    // Handle node selection
+    diagram.addDiagramListener("SelectionChanged", (e) => {
+      const diagram = e.diagram;
+      const selectedNode = diagram?.selection.first();
       
-      // Snap to grid
-      const snappedPosition = {
-        x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
-        y: Math.round(position.y / GRID_SIZE) * GRID_SIZE
-      };
-      
-      cell.position(snappedPosition.x, snappedPosition.y);
-      
-      // Update ruler dimensions if this is the selected enclosure
-      if (selectedEnclosure && selectedEnclosure.id === cell.id) {
-        const size = cell.size();
-        setRulerDimensions({
-          width: size.width,
-          height: size.height
-        });
-      }
-    });
-
-    // Handle selection for ruler display
-    paper.on('element:pointerclick', function(elementView) {
-      const element = elementView.model;
-      if (element.get('type') === 'standard.Rectangle' && element.get('isEnclosure')) {
-        setSelectedEnclosure(element);
+      if (selectedNode && selectedNode.category === "enclosure") {
+        setSelectedEnclosure(selectedNode);
         setShowRuler(true);
-        const size = element.size();
+        const bounds = selectedNode.actualBounds;
         setRulerDimensions({
-          width: size.width,
-          height: size.height
+          width: bounds.width,
+          height: bounds.height
         });
+      } else {
+        setSelectedEnclosure(null);
+        setShowRuler(false);
       }
-    });
-
-    // Handle blank click to deselect
-    paper.on('blank:pointerclick', function() {
-      setSelectedEnclosure(null);
-      setShowRuler(false);
     });
     
-    // Handle resizing of an enclosure
-    paper.on('element:resize', function(elementView) {
-      const element = elementView.model;
-      // Ensure the element size is snapped to the grid
-      const size = element.size();
-      const newSize = {
-        width: Math.round(size.width / GRID_SIZE) * GRID_SIZE,
-        height: Math.round(size.height / GRID_SIZE) * GRID_SIZE
-      };
-      element.resize(newSize.width, newSize.height);
+    // Handle node resizing
+    diagram.addDiagramListener("SelectionResized", (e) => {
+      const diagram = e.diagram;
+      const selectedNode = diagram?.selection.first();
       
-      // Update ruler if this is the selected enclosure
-      if (selectedEnclosure && selectedEnclosure.id === element.id) {
+      if (selectedNode && selectedNode.category === "enclosure") {
+        const bounds = selectedNode.actualBounds;
+        // Snap to grid
+        const width = Math.round(bounds.width / GRID_SIZE) * GRID_SIZE;
+        const height = Math.round(bounds.height / GRID_SIZE) * GRID_SIZE;
+        selectedNode.resizeObject.desiredSize = new go.Size(width, height);
+        
+        // Update ruler dimensions
         setRulerDimensions({
-          width: newSize.width,
-          height: newSize.height
+          width: width,
+          height: height
         });
       }
     });
+    
+    // Save instance ref
+    diagramInstanceRef.current = diagram;
     
     // Load saved layout if available
     const savedLayout = localStorage.getItem(`layout-${subProjectId}`);
     if (savedLayout) {
       try {
-        const savedCells = JSON.parse(savedLayout);
-        const loadedCells = savedCells.map((cell: any) => {
-          if (cell.type === 'standard.Rectangle') {
-            return new joint.shapes.standard.Rectangle(cell);
-          }
-          return null;
-        }).filter(Boolean);
-        
-        graph.addCells(loadedCells);
+        const model = new go.GraphLinksModel();
+        model.nodeDataArray = JSON.parse(savedLayout);
+        diagram.model = model;
       } catch (e) {
         console.error('Error loading saved layout', e);
       }
@@ -314,9 +296,8 @@ const PanelLayout = () => {
     
     return () => {
       // Cleanup
-      if (paperInstanceRef.current) {
-        // Use type assertion to access the remove method
-        (paperInstanceRef.current as unknown as { remove: () => void }).remove();
+      if (diagramInstanceRef.current) {
+        diagramInstanceRef.current.div = null;
       }
     };
   }, [subProjectId]);
@@ -335,17 +316,17 @@ const PanelLayout = () => {
   
   // Save layout
   const saveLayout = () => {
-    if (!graphRef.current) return;
+    if (!diagramInstanceRef.current) return;
     
-    const serializedGraph = graphRef.current.toJSON();
-    localStorage.setItem(`layout-${subProjectId}`, JSON.stringify(serializedGraph.cells));
+    const nodeDataArray = diagramInstanceRef.current.model.toJson();
+    localStorage.setItem(`layout-${subProjectId}`, nodeDataArray);
     
     toast("Your panel layout has been saved");
   };
   
   // Create a component element on the canvas
   const createComponentElement = (bomItem: BomItem) => {
-    if (!graphRef.current) return;
+    if (!diagramInstanceRef.current) return;
     
     // Check if item is available
     const available = bomItem.quantity - (bomItem.inUse || 0);
@@ -366,29 +347,23 @@ const PanelLayout = () => {
     
     const color = categoryColors[bomItem.category] || categoryColors.other;
     
-    // Create a rectangle element
-    const rect = new joint.shapes.standard.Rectangle({
-      position: { x: 100, y: 100 },
-      size: { width: 80, height: 40 },
-      attrs: {
-        body: {
-          fill: color,
-          stroke: 'none'
-        },
-        label: {
-          text: bomItem.description,
-          fill: 'white',
-          fontWeight: 'bold',
-          fontSize: 10,
-          textVerticalAnchor: 'middle',
-          textAnchor: 'middle'
-        }
-      },
+    // Create component data
+    const newComponent = {
+      key: `component-${Date.now()}`,
+      category: "component",
+      loc: "100 100",
+      width: 80,
+      height: 40,
+      color: color,
+      description: bomItem.description,
       bomItemId: bomItem.id
-    });
+    };
     
-    // Always add elements as an array to graphs
-    graphRef.current.addCells([rect as unknown as joint.dia.Cell]);
+    // Add component to the model
+    const model = diagramInstanceRef.current.model;
+    model.startTransaction("add component");
+    model.addNodeData(newComponent);
+    model.commitTransaction("add component");
     
     // Update BOM item to show it's in use
     setBomItems(items => 
@@ -404,53 +379,38 @@ const PanelLayout = () => {
 
   // Create an enclosure
   const createEnclosure = () => {
-    if (!graphRef.current) return;
+    if (!diagramInstanceRef.current) return;
 
-    // Create a rectangle representing an enclosure
-    const enclosure = new joint.shapes.standard.Rectangle({
-      position: { x: 100, y: 100 },
-      size: { width: 200, height: 300 },
-      attrs: {
-        body: {
-          fill: 'rgba(200, 200, 200, 0.3)',
-          stroke: '#333',
-          strokeWidth: 2,
-          rx: 5, // rounded corners
-          ry: 5
-        },
-        label: {
-          text: 'Enclosure',
-          fill: '#333',
-          fontWeight: 'bold',
-          fontSize: 12,
-          textVerticalAnchor: 'top',
-          textAnchor: 'middle',
-          refY: 10
-        }
-      },
-      isEnclosure: true
-    });
-
-    // Make the enclosure resizable
-    enclosure.attr({
-      resizable: {
-        minWidth: GRID_SIZE,
-        minHeight: GRID_SIZE,
-        maxWidth: 1000,
-        maxHeight: 1000,
-        orthogonalResize: true,
-        preserveAspectRatio: false
-      }
-    });
-
-    // Always use addCells with an array to fix type compatibility
-    graphRef.current.addCells([enclosure as unknown as joint.dia.Cell]);
-    setSelectedEnclosure(enclosure as unknown as joint.dia.Cell);
-    setShowRuler(true);
-    setRulerDimensions({
+    // Create enclosure data
+    const newEnclosure = {
+      key: `enclosure-${Date.now()}`,
+      category: "enclosure",
+      loc: "100 100",
+      size: "200 300",
       width: 200,
-      height: 300
-    });
+      height: 300,
+      text: "Enclosure",
+      isEnclosure: true
+    };
+    
+    // Add enclosure to the model
+    const model = diagramInstanceRef.current.model;
+    model.startTransaction("add enclosure");
+    model.addNodeData(newEnclosure);
+    model.commitTransaction("add enclosure");
+    
+    // Find the node we just added
+    const enclosureNode = diagramInstanceRef.current.findNodeForKey(newEnclosure.key);
+    if (enclosureNode) {
+      // Select the new enclosure
+      diagramInstanceRef.current.select(enclosureNode);
+      setSelectedEnclosure(enclosureNode);
+      setShowRuler(true);
+      setRulerDimensions({
+        width: 200,
+        height: 300
+      });
+    }
     
     saveLayout();
     
@@ -459,14 +419,14 @@ const PanelLayout = () => {
   
   // Save layout as template
   const saveLayoutTemplate = () => {
-    if (!graphRef.current) return;
+    if (!diagramInstanceRef.current) return;
     if (!newTemplateName.trim()) {
       toast.error("Please enter a template name");
       return;
     }
     
-    const serializedGraph = graphRef.current.toJSON();
-    if (serializedGraph.cells.length === 0) {
+    const model = diagramInstanceRef.current.model;
+    if (model.nodeDataArray.length === 0) {
       toast.error("Cannot save an empty layout template");
       return;
     }
@@ -477,7 +437,7 @@ const PanelLayout = () => {
       id: Date.now().toString(),
       name: newTemplateName,
       category: finalCategory,
-      layout: serializedGraph,
+      layout: model,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -496,21 +456,11 @@ const PanelLayout = () => {
   
   // Load a template
   const loadLayoutTemplate = (template: LayoutTemplate) => {
-    if (!graphRef.current) return;
+    if (!diagramInstanceRef.current) return;
     
-    // Clear current graph
-    graphRef.current.clear();
-    
-    // Load cells from template
+    // Clear current model and load from template
     try {
-      const loadedCells = template.layout.cells.map((cell: any) => {
-        if (cell.type === 'standard.Rectangle') {
-          return new joint.shapes.standard.Rectangle(cell);
-        }
-        return null;
-      }).filter(Boolean);
-      
-      graphRef.current.addCells(loadedCells);
+      diagramInstanceRef.current.model = template.layout;
       toast.success(`Template "${template.name}" loaded`);
     } catch (e) {
       console.error('Error loading template:', e);
@@ -529,26 +479,28 @@ const PanelLayout = () => {
   
   // Zoom controls
   const handleZoomIn = () => {
-    if (!paperInstanceRef.current) return;
-    const currentScale = paperInstanceRef.current.scale();
-    paperInstanceRef.current.scale(currentScale.sx * 1.2, currentScale.sy * 1.2);
+    if (!diagramInstanceRef.current) return;
+    const newScale = scale * 1.2;
+    diagramInstanceRef.current.scale = newScale;
+    setScale(newScale);
   };
   
   const handleZoomOut = () => {
-    if (!paperInstanceRef.current) return;
-    const currentScale = paperInstanceRef.current.scale();
-    paperInstanceRef.current.scale(currentScale.sx / 1.2, currentScale.sy / 1.2);
+    if (!diagramInstanceRef.current) return;
+    const newScale = scale / 1.2;
+    diagramInstanceRef.current.scale = newScale;
+    setScale(newScale);
   };
   
   const handleResetView = () => {
-    if (!paperInstanceRef.current) return;
-    paperInstanceRef.current.scale(1, 1);
+    if (!diagramInstanceRef.current) return;
+    diagramInstanceRef.current.scale = 1;
+    setScale(1);
   };
   
   const handleToggleGrid = () => {
-    if (!paperInstanceRef.current) return;
-    paperInstanceRef.current.options.drawGrid = !paperInstanceRef.current.options.drawGrid;
-    paperInstanceRef.current.drawGrid();
+    if (!diagramInstanceRef.current) return;
+    diagramInstanceRef.current.grid.visible = !diagramInstanceRef.current.grid.visible;
   };
 
   return (
@@ -603,7 +555,7 @@ const PanelLayout = () => {
         direction="vertical"
         className="min-h-[600px] border rounded-lg"
       >
-        {/* JointJS Canvas Panel */}
+        {/* GoJS Canvas Panel */}
         <ResizablePanel defaultSize={60} minSize={30}>
           <div className="h-full flex flex-col">
             <div className="bg-muted p-2 flex items-center space-x-2">
@@ -627,8 +579,8 @@ const PanelLayout = () => {
             </div>
             <div className="relative flex-1 overflow-hidden">
               <div 
-                ref={paperRef} 
-                className="absolute inset-0"
+                ref={diagramRef} 
+                className="diagram-component absolute inset-0"
               ></div>
               
               {/* Ruler overlay */}
