@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
@@ -8,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, FileText, Download, Filter, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, FileText, Download, Filter, ArrowLeft, Layers } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -55,6 +57,7 @@ const BomManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("bom-list");
   
   const { subProjectId } = useParams();
   const location = useLocation();
@@ -278,6 +281,19 @@ const BomManagement = () => {
     }
   };
 
+  // Placeholder component for 2D view
+  const TwoDView = () => (
+    <div className="flex flex-col items-center justify-center h-[600px] bg-gray-50 border rounded-lg">
+      <Layers className="h-16 w-16 text-gray-400 mb-4" />
+      <h3 className="text-xl font-medium text-gray-600">2D Panel Layout View</h3>
+      <p className="text-gray-500 mt-2 max-w-md text-center">
+        This is where the 2D panel layout visualization would appear. 
+        Components can be arranged and positioned on the panel.
+      </p>
+      <Button className="mt-6">Initialize Layout Builder</Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation pageTitle="BOM Management" />
@@ -311,124 +327,147 @@ const BomManagement = () => {
           </div>
         )}
 
-        <div className="mb-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-5 w-5" />
-                {subProject ? `BOM for ${subProject.name}` : "Bill of Materials Items"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4 mb-4 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="filter">Search</Label>
-                  <Input
-                    id="filter"
-                    placeholder="Filter items..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="w-64"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryFilter">Category</Label>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger id="categoryFilter" className="w-48">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {defaultCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={applyFilter} variant="outline">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Apply Filter
-                  </Button>
-                  <Button onClick={clearFilter} variant="outline">
-                    Clear Filters
-                  </Button>
-                </div>
-                <div className="flex gap-2 ml-auto">
-                  <Button variant={editMode ? "default" : "outline"} onClick={toggleEditMode}>
-                    {editMode ? "Done Editing" : "Edit Items"}
-                  </Button>
-                  <Button onClick={handleAddRow} className="ml-2">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Item
-                  </Button>
-                  <Button onClick={exportToCsv} variant="outline">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export CSV
-                  </Button>
-                </div>
-              </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            <TabsTrigger value="bom-list">BOM Management</TabsTrigger>
+            <TabsTrigger value="2d-view">2D Panel Layout</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="bom-list">
+            <div className="mb-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center">
+                    <FileText className="mr-2 h-5 w-5" />
+                    {subProject ? `BOM for ${subProject.name}` : "Bill of Materials Items"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-4 mb-4 items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="filter">Search</Label>
+                      <Input
+                        id="filter"
+                        placeholder="Filter items..."
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="w-64"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="categoryFilter">Category</Label>
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger id="categoryFilter" className="w-48">
+                          <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {defaultCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={applyFilter} variant="outline">
+                        <Filter className="mr-2 h-4 w-4" />
+                        Apply Filter
+                      </Button>
+                      <Button onClick={clearFilter} variant="outline">
+                        Clear Filters
+                      </Button>
+                    </div>
+                    <div className="flex gap-2 ml-auto">
+                      <Button variant={editMode ? "default" : "outline"} onClick={toggleEditMode}>
+                        {editMode ? "Done Editing" : "Edit Items"}
+                      </Button>
+                      <Button onClick={handleAddRow} className="ml-2">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Item
+                      </Button>
+                      <Button onClick={exportToCsv} variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export CSV
+                      </Button>
+                    </div>
+                  </div>
 
-              <div 
-                className="ag-theme-alpine" 
-                style={{ 
-                  height: '500px', 
-                  width: '100%' 
-                }}
-              >
-                <AgGridReact
-                  ref={gridRef}
-                  rowData={rowData}
-                  columnDefs={columnDefs}
-                  defaultColDef={defaultColDef}
-                  onGridReady={onGridReady}
-                  rowSelection="multiple"
-                  animateRows={true}
-                  onCellValueChanged={onCellValueChanged}
-                  suppressClickEdit={!editMode}
-                />
-              </div>
+                  <div 
+                    className="ag-theme-alpine" 
+                    style={{ 
+                      height: '500px', 
+                      width: '100%' 
+                    }}
+                  >
+                    <AgGridReact
+                      ref={gridRef}
+                      rowData={rowData}
+                      columnDefs={columnDefs}
+                      defaultColDef={defaultColDef}
+                      onGridReady={onGridReady}
+                      rowSelection="multiple"
+                      animateRows={true}
+                      onCellValueChanged={onCellValueChanged}
+                      suppressClickEdit={!editMode}
+                    />
+                  </div>
 
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium text-sm text-muted-foreground">Materials Total</h3>
-                    <p className="text-2xl font-bold">
-                      {totalMaterialCost.toLocaleString('en-AU', { 
-                        style: 'currency', 
-                        currency: 'AUD' 
-                      })}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium text-sm text-muted-foreground">Labor Total</h3>
-                    <p className="text-2xl font-bold">
-                      {totalLaborCost.toLocaleString('en-AU', { 
-                        style: 'currency', 
-                        currency: 'AUD' 
-                      })}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium text-sm text-muted-foreground">Grand Total</h3>
-                    <p className="text-2xl font-bold">
-                      {grandTotal.toLocaleString('en-AU', { 
-                        style: 'currency', 
-                        currency: 'AUD' 
-                      })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="font-medium text-sm text-muted-foreground">Materials Total</h3>
+                        <p className="text-2xl font-bold">
+                          {totalMaterialCost.toLocaleString('en-AU', { 
+                            style: 'currency', 
+                            currency: 'AUD' 
+                          })}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="font-medium text-sm text-muted-foreground">Labor Total</h3>
+                        <p className="text-2xl font-bold">
+                          {totalLaborCost.toLocaleString('en-AU', { 
+                            style: 'currency', 
+                            currency: 'AUD' 
+                          })}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="font-medium text-sm text-muted-foreground">Grand Total</h3>
+                        <p className="text-2xl font-bold">
+                          {grandTotal.toLocaleString('en-AU', { 
+                            style: 'currency', 
+                            currency: 'AUD' 
+                          })}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="2d-view">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center">
+                  <Layers className="mr-2 h-5 w-5" />
+                  {subProject ? `2D Layout for ${subProject.name}` : "2D Panel Layout"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TwoDView />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
