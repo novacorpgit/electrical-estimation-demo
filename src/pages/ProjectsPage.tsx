@@ -14,7 +14,9 @@ const ProjectsPage = () => {
         <Alert className="mb-6 bg-blue-50 border-blue-200">
           <Info className="h-5 w-5 text-blue-800" />
           <AlertDescription className="text-blue-800">
-            Use the "Hide Completed Projects" toggle to filter out completed projects. For completed projects, use the "Create Revision" button to make changes.
+            Use the "Hide Completed Projects" toggle to filter out completed projects. 
+            For completed projects, use the "Create Revision" button to make changes. 
+            You can also duplicate projects to create similar quotations quickly.
           </AlertDescription>
         </Alert>
         

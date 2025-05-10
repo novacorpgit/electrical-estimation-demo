@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Copy, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,25 @@ import {
   TableHead,
   TableRow
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 // Define column type
 type TableColumn = {
@@ -36,6 +55,8 @@ interface ProjectsTableProps {
   onColumnReorder: (draggedColumn: string, targetColumn: string) => void;
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
+  onDuplicateProject?: (project: any) => void;
+  onDeleteProject?: (project: any) => void;
 }
 
 // Drag and drop column header component
@@ -119,11 +140,18 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   onAssignEstimator,
   onColumnReorder,
   getStatusColor,
-  getPriorityColor
+  getPriorityColor,
+  onDuplicateProject,
+  onDeleteProject
 }) => {
   // Add sorting state
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [projectToDuplicate, setProjectToDuplicate] = useState<any>(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
   // Handle sorting
   const handleSort = (columnId: string) => {
@@ -316,6 +344,60 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
     },
   ];
 
+  // Add the actions column with additional actions
+  columns.find(col => col.id === 'actions')!.cell = (project) => (
+    <div onClick={(e) => e.stopPropagation()} className="space-x-1">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-6 py-0 px-2 text-xs"
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewProject(project.id);
+        }}
+      >
+        View
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        className="h-6 py-0 px-2 text-xs" 
+        onClick={(e) => {
+          e.stopPropagation();
+          onEditProject(project);
+        }}
+      >
+        Edit
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        className="h-6 py-0 px-2 text-xs flex items-center" 
+        onClick={(e) => {
+          e.stopPropagation();
+          setProjectToDuplicate(project);
+          setShowDuplicateDialog(true);
+        }}
+      >
+        <Copy className="h-3 w-3 mr-1" />
+        Duplicate
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm"
+        className="h-6 py-0 px-2 text-xs text-red-600 flex items-center" 
+        onClick={(e) => {
+          e.stopPropagation();
+          setProjectToDelete(project);
+          setShowDeleteDialog(true);
+        }}
+      >
+        <Trash2 className="h-3 w-3 mr-1" />
+        Delete
+      </Button>
+    </div>
+  );
+
   // Filter and order columns based on visibility and order state
   const visibleOrderedColumns = columnOrder
     .filter(columnId => visibleColumns[columnId])
@@ -382,6 +464,82 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Project Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Warning: This action cannot be undone. To confirm deletion, please type DELETE in the box below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input 
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="mt-2"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteConfirmText("");
+              setProjectToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirmText === "DELETE" && projectToDelete && onDeleteProject) {
+                  onDeleteProject(projectToDelete);
+                  setDeleteConfirmText("");
+                  setProjectToDelete(null);
+                }
+              }}
+              disabled={deleteConfirmText !== "DELETE"}
+              className={deleteConfirmText === "DELETE" ? "bg-red-600 hover:bg-red-700" : "bg-gray-400 cursor-not-allowed"}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Duplicate Project Confirmation Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate Project</DialogTitle>
+            <DialogDescription>
+              You are about to duplicate this project. All project details will be copied.
+              Please complete the duplicated project's information to assign a new quotation number.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setProjectToDuplicate(null);
+                setShowDuplicateDialog(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (projectToDuplicate && onDuplicateProject) {
+                  onDuplicateProject(projectToDuplicate);
+                  setProjectToDuplicate(null);
+                  setShowDuplicateDialog(false);
+                }
+              }}
+            >
+              Confirm Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

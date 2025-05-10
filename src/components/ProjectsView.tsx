@@ -150,6 +150,7 @@ export const ProjectsView = () => {
   const [selectedQuickProject, setSelectedQuickProject] = useState<any>(null);
   const [hideCompletedProjects, setHideCompletedProjects] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [duplicatedProject, setDuplicatedProject] = useState<any>(null);
   
   // Column visibility state - updated to include all fields from CreateProjectForm
   const [visibleColumns, setVisibleColumns] = useState({
@@ -372,6 +373,42 @@ export const ProjectsView = () => {
     } else {
       navigate(`/project/${projectId}`);
     }
+  };
+
+  // Add duplicate project handler
+  const handleDuplicateProject = (project: any) => {
+    // In a real app, we would call an API to duplicate the project
+    // For now, simulate by creating a new project object with a new ID
+    const duplicateId = `${project.id}-copy`;
+    const duplicatedProject = {
+      ...project,
+      id: duplicateId,
+      projectName: `Copy of ${project.projectName}`,
+      status: "Draft" // Reset the status to Draft for the duplicate
+    };
+    
+    toast({
+      title: "Project duplicated",
+      description: `A copy of "${project.projectName}" has been created.`
+    });
+    
+    // For demo purposes, we're setting this state to show what would happen
+    // In a real app, this would be saved to the database
+    setDuplicatedProject(duplicatedProject);
+    
+    // Open the edit form with the duplicated project details
+    setSelectedProjectForEdit(duplicatedProject);
+    setSelectedQuickProject(null);
+    setShowCreateProject(true);
+  };
+
+  // Add delete project handler
+  const handleDeleteProject = (project: any) => {
+    // In a real app, we would call an API to delete the project
+    toast({
+      title: "Project deleted",
+      description: `Project "${project.projectName}" has been deleted.`,
+    });
   };
 
   // Handle column visibility toggle
@@ -675,6 +712,8 @@ export const ProjectsView = () => {
                   onColumnReorder={handleColumnReorder}
                   getStatusColor={getStatusColor}
                   getPriorityColor={getPriorityColor}
+                  onDuplicateProject={handleDuplicateProject}
+                  onDeleteProject={handleDeleteProject}
                 />
               </DndProvider>
             </TabsContent>
