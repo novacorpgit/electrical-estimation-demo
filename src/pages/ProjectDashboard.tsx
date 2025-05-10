@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
 import { ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy, Download, FileDown } from 'lucide-react';
 
 // Mock project data
@@ -120,6 +121,7 @@ const ProjectDashboard = () => {
   const [activeTab, setActiveTab] = useState("subprojects");
   const [showCompletedDialog, setShowCompletedDialog] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
 
   // Get project data based on projectId
   const project = projectId ? mockProjects[projectId as keyof typeof mockProjects] : null;
@@ -130,7 +132,7 @@ const ProjectDashboard = () => {
   // Check if this is a revision
   const isRevision = project?.id.includes("-R");
 
-  // Check if quotation is completed
+  // Check if quotation is complete
   const isQuotationComplete = project?.quotationStatus === "Complete";
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -185,6 +187,9 @@ const ProjectDashboard = () => {
         });
       }
     }
+  };
+  const handleGenerateQuote = () => {
+    setShowQuoteGenerator(true);
   };
   const handleCreateRevision = () => {
     if (project) {
@@ -247,6 +252,17 @@ const ProjectDashboard = () => {
               {project.priority}
             </Badge>
             
+            {/* Quote generation button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" 
+              onClick={handleGenerateQuote}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-1" />
+              Generate Quote
+            </Button>
+            
             {/* Add download button when quotation is complete */}
             {isQuotationComplete && <Button variant="outline" size="sm" className="flex items-center bg-green-50 text-green-700 border-green-200 hover:bg-green-100" onClick={handleDownloadQuotation}>
                 <Download className="h-4 w-4 mr-1" />
@@ -267,6 +283,10 @@ const ProjectDashboard = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleToggleCompleted}>
                   {project.status === "Completed" ? "Mark As In Progress" : "Mark As Completed"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleGenerateQuote}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Generate Quote
                 </DropdownMenuItem>
                 {project.status === "Completed" && <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
                     Create Revision
@@ -575,6 +595,14 @@ const ProjectDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Quote Generator Dialog */}
+      <QuoteGenerator 
+        open={showQuoteGenerator}
+        onOpenChange={setShowQuoteGenerator}
+        projectId={projectId}
+        projectName={project.projectName}
+      />
     </div>;
 };
 export default ProjectDashboard;
