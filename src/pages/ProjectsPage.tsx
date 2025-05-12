@@ -7,6 +7,7 @@ import { AlertTriangle, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { Card, CardContent } from "@/components/ui/card";
+import { CalendarScheduler } from "@/components/estimators/CalendarScheduler";
 
 const ProjectsPage = () => {
   const [activeTab, setActiveTab] = useState<string>("view-projects");
@@ -31,9 +32,10 @@ const ProjectsPage = () => {
         </Alert>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mb-6">
+          <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
             <TabsTrigger value="view-projects">Projects</TabsTrigger>
             <TabsTrigger value="create-project">Create New Project</TabsTrigger>
+            <TabsTrigger value="estimator-schedule">Estimator Schedule</TabsTrigger>
           </TabsList>
           
           <TabsContent value="view-projects">
@@ -48,6 +50,15 @@ const ProjectsPage = () => {
                   onCancel={() => setActiveTab("view-projects")}
                   onSuccess={handleProjectCreated}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="estimator-schedule">
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-2xl font-bold mb-6">Estimator Schedule</h2>
+                <CalendarScheduler />
               </CardContent>
             </Card>
           </TabsContent>
