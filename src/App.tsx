@@ -53,8 +53,18 @@ const router = createBrowserRouter([
     path: "/panel-layout",
     element: <PanelLayout />,
   },
+  // New route with subproject parameter
+  {
+    path: "/panel-layout/:subProjectId",
+    element: <PanelLayout />,
+  },
   {
     path: "/bom",
+    element: <BomManagement />,
+  },
+  // New route with subproject parameter
+  {
+    path: "/bom/:subProjectId",
     element: <BomManagement />,
   },
   {
