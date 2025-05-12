@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,45 @@ import {
 interface NavigationProps {
   pageTitle?: string;
 }
+
+const navItems = [
+  {
+    name: "Dashboard",
+    href: "/"
+  },
+  {
+    name: "Projects",
+    href: "/projects"
+  },
+  {
+    name: "Clients",
+    href: "/clients"
+  },
+  {
+    name: "Quotes",
+    href: "/quotes"
+  },
+  {
+    name: "Templates",
+    href: "/templates"
+  },
+  {
+    name: "Panel Layout",
+    href: "/panel-layout"
+  },
+  {
+    name: "BOM",
+    href: "/bom"
+  },
+  {
+    name: "Users",
+    href: "/users"
+  },
+  {
+    name: "Estimator Schedule",
+    href: "/estimator-schedule"
+  },
+];
 
 export const Navigation = ({ pageTitle }: NavigationProps) => {
   const navigate = useNavigate();

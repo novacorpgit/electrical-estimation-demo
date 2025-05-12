@@ -1,48 +1,89 @@
+import React from 'react';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+import Index from "./pages/Index";
+import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDashboard from "./pages/ProjectDashboard";
+import ClientsPage from "./pages/ClientsPage";
+import QuotesPage from "./pages/QuotesPage";
+import QuotationPage from "./pages/QuotationPage";
+import TemplatesPage from "./pages/TemplatesPage";
+import PanelLayout from "./pages/PanelLayout";
+import BomManagement from "./pages/BomManagement";
+import BomUploadPage from "./pages/BomUploadPage";
+import UserManagement from "./pages/UserManagement";
+import UserProfile from "./pages/UserProfile";
+import EstimatorSchedulePage from "./pages/EstimatorSchedulePage";
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "./components/ui/sonner";
+const NotFound = () => {
+  return (
+    <div>
+      <h2>Not Found</h2>
+      <p>Sorry, the page you are looking for does not exist.</p>
+    </div>
+  );
+};
 
-// Import pages
-import Index from './pages/Index';
-import NotFound from './pages/NotFound';
-import ProjectDashboard from './pages/ProjectDashboard';
-import BomManagement from './pages/BomManagement';
-import PanelLayout from './pages/PanelLayout';
-import UserManagement from './pages/UserManagement';
-import UserProfile from './pages/UserProfile';
-import QuotationPage from './pages/QuotationPage';
-import BomUploadPage from './pages/BomUploadPage';
-import ProjectsPage from './pages/ProjectsPage';
-import ClientsPage from './pages/ClientsPage';
-import TemplatesPage from './pages/TemplatesPage';
-import QuotesPage from './pages/QuotesPage';
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Index />,
+    errorElement: <NotFound />,
+  },
+  {
+    path: "/projects",
+    element: <ProjectsPage />,
+  },
+  {
+    path: "/project/:id",
+    element: <ProjectDashboard />,
+  },
+  {
+    path: "/clients",
+    element: <ClientsPage />,
+  },
+  {
+    path: "/quotes",
+    element: <QuotesPage />,
+  },
+  {
+    path: "/quotations/:id",
+    element: <QuotationPage />,
+  },
+  {
+    path: "/templates",
+    element: <TemplatesPage />,
+  },
+  {
+    path: "/panel-layout",
+    element: <PanelLayout />,
+  },
+  {
+    path: "/bom",
+    element: <BomManagement />,
+  },
+  {
+    path: "/bom-upload",
+    element: <BomUploadPage />,
+  },
+  {
+    path: "/users",
+    element: <UserManagement />,
+  },
+  {
+    path: "/user/:id",
+    element: <UserProfile />,
+  },
+  {
+    path: "/estimator-schedule",
+    element: <EstimatorSchedulePage />,
+  },
+]);
 
 function App() {
-  return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/clients" element={<ClientsPage />} />
-          <Route path="/templates" element={<TemplatesPage />} />
-          <Route path="/quotes" element={<QuotesPage />} />
-          <Route path="/project/:projectId" element={<ProjectDashboard />} />
-          <Route path="/bom" element={<BomManagement />} />
-          <Route path="/bom/:subProjectId" element={<BomManagement />} />
-          <Route path="/panel-layout/:subProjectId" element={<PanelLayout />} />
-          <Route path="/users" element={<UserManagement />} />
-          <Route path="/users/:userId" element={<UserProfile />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/quotation/:projectId/:subProjectId" element={<QuotationPage />} />
-          <Route path="/bom-upload" element={<BomUploadPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <Toaster />
-    </ThemeProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
