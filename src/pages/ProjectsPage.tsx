@@ -47,7 +47,6 @@ const ProjectsPage = () => {
                 <CreateProjectForm 
                   onCancel={() => setActiveTab("view-projects")}
                   onSuccess={handleProjectCreated}
-                  useEnhancedScheduler={true}
                 />
               </CardContent>
             </Card>

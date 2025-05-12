@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EstimatorAvailability } from "./estimators/EstimatorAvailability";
-import { EstimatorScheduleView } from "./estimators/EstimatorScheduleView";
 import { format, addDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Calendar, Info } from "lucide-react";
@@ -94,14 +93,12 @@ interface CreateProjectFormProps {
     projectName?: string;
     clientName?: string;
   };
-  useEnhancedScheduler?: boolean;
 }
 
 export const CreateProjectForm = ({
   onCancel,
   onSuccess,
-  initialData,
-  useEnhancedScheduler = false
+  initialData
 }: CreateProjectFormProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("details");
@@ -556,21 +553,7 @@ export const CreateProjectForm = ({
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
-          {useEnhancedScheduler ? (
-            <EstimatorScheduleView 
-              view="week"
-              mode="select"
-              onSelectDate={handleEstimatorSelect}
-              selectedDate={formData.estimationDate}
-              selectedEstimatorId={formData.estimatorId}
-            />
-          ) : (
-            <EstimatorAvailability 
-              onSelectDate={handleEstimatorSelect} 
-              selectedDate={formData.estimationDate} 
-              selectedEstimatorId={formData.estimatorId} 
-            />
-          )}
+          <EstimatorAvailability onSelectDate={handleEstimatorSelect} selectedDate={formData.estimationDate} selectedEstimatorId={formData.estimatorId} />
 
           {formData.estimatorId && formData.estimationDate && (
             <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
