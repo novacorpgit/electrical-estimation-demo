@@ -17,15 +17,7 @@ import BomUploadPage from "./pages/BomUploadPage";
 import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
 import EstimatorSchedulePage from "./pages/EstimatorSchedulePage";
-
-const NotFound = () => {
-  return (
-    <div>
-      <h2>Not Found</h2>
-      <p>Sorry, the page you are looking for does not exist.</p>
-    </div>
-  );
-};
+import NotFound from "./pages/NotFound";
 
 const router = createBrowserRouter([
   {
