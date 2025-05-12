@@ -5,6 +5,7 @@ import { CalendarDays } from "lucide-react";
 import { CalendarScheduler } from "@/components/estimators/CalendarScheduler";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EstimatorScheduleView } from "@/components/estimators/EstimatorScheduleView";
+import { Toaster } from "@/components/ui/sonner";
 
 const EstimatorSchedulePage = () => {
   const [viewType, setViewType] = useState<"calendar" | "list">("calendar");
@@ -32,6 +33,9 @@ const EstimatorSchedulePage = () => {
           <EstimatorScheduleView />
         )}
       </main>
+      
+      {/* Adding toast provider for notifications */}
+      <Toaster />
     </div>
   );
 };
