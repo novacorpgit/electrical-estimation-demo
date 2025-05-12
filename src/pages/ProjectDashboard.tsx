@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
+import PreviousQuotesTab from "@/components/quote/PreviousQuotesTab";
+import CopyProjectModal from "@/components/projects/CopyProjectModal";
 import { ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy, Download, FileDown, ListTodo } from 'lucide-react';
 
 // Mock project data
@@ -123,6 +125,7 @@ const ProjectDashboard = () => {
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
   const [showIncompleteTasksWarning, setShowIncompleteTasksWarning] = useState(false);
+  const [showCopyProjectModal, setShowCopyProjectModal] = useState(false);
 
   // Get project data based on projectId
   const project = projectId ? mockProjects[projectId as keyof typeof mockProjects] : null;
@@ -271,7 +274,7 @@ const ProjectDashboard = () => {
               {project.status}
             </Badge>
             
-            {/* Quote generation button - Moved to be right after status badge */}
+            {/* Quote generation button */}
             <Button 
               variant="outline" 
               size="sm" 
@@ -280,6 +283,17 @@ const ProjectDashboard = () => {
             >
               <FileSpreadsheet className="h-4 w-4 mr-1" />
               Generate Quote
+            </Button>
+            
+            {/* New Copy to Project button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100"
+              onClick={() => setShowCopyProjectModal(true)}
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Copy to Project
             </Button>
             
             <Badge className={getPriorityColor(project.priority)}>
@@ -310,6 +324,10 @@ const ProjectDashboard = () => {
                 <DropdownMenuItem onClick={handleGenerateQuote}>
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
                   Generate Quote
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowCopyProjectModal(true)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy to Project
                 </DropdownMenuItem>
                 {project.status === "Completed" && <DropdownMenuItem onClick={() => setShowRevisionDialog(true)}>
                     Create Revision
@@ -398,11 +416,12 @@ const ProjectDashboard = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList>
-            {/* Reordered tabs - Sub-Projects first, Overview last */}
+            {/* Reordered tabs with new Previous Quotes tab */}
             <TabsTrigger value="subprojects">Sub-Projects</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="previous-quotes">Previous Quotes</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
-            {/* New Download Quotation tab that only shows when quotation is complete */}
+            {/* Download Quotation tab that only shows when quotation is complete */}
             <TabsTrigger value="download-quotation" hideTab={!isQuotationComplete}>
               Download Quotation
             </TabsTrigger>
@@ -429,6 +448,18 @@ const ProjectDashboard = () => {
               </CardHeader>
               <CardContent>
                 <NotesPanel entityId={projectId} entityType="project" />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="previous-quotes" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Previous Quotes</CardTitle>
+                <CardDescription>View and manage all quotations associated with this project.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PreviousQuotesTab projectId={projectId} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -653,6 +684,14 @@ const ProjectDashboard = () => {
       <QuoteGenerator 
         open={showQuoteGenerator}
         onOpenChange={setShowQuoteGenerator}
+        projectId={projectId}
+        projectName={project.projectName}
+      />
+      
+      {/* Copy Project Modal */}
+      <CopyProjectModal
+        open={showCopyProjectModal}
+        onOpenChange={setShowCopyProjectModal}
         projectId={projectId}
         projectName={project.projectName}
       />
