@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteGenerator } from "@/components/quote/QuoteGenerator";
-import { ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy, Download, FileDown } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Clock, Calendar, MapPin, Briefcase, User, Tag, FileSpreadsheet, AlertTriangle, ClipboardCheck, Copy, Download, FileDown, ListTodo } from 'lucide-react';
 
 // Mock project data
 const mockProjects = {
@@ -122,6 +122,7 @@ const ProjectDashboard = () => {
   const [showCompletedDialog, setShowCompletedDialog] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [showQuoteGenerator, setShowQuoteGenerator] = useState(false);
+  const [showIncompleteTasksWarning, setShowIncompleteTasksWarning] = useState(false);
 
   // Get project data based on projectId
   const project = projectId ? mockProjects[projectId as keyof typeof mockProjects] : null;
@@ -134,6 +135,15 @@ const ProjectDashboard = () => {
 
   // Check if quotation is complete
   const isQuotationComplete = project?.quotationStatus === "Complete";
+  
+  // Function to check for incomplete tasks
+  const checkForIncompleteTasks = () => {
+    // In a real app, we would query the actual tasks
+    // For now, we'll use the global variable set by the NotesPanel
+    const hasIncompleteTasks = window.notesIncompleteTasks > 0;
+    return hasIncompleteTasks;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "In Progress":
@@ -180,13 +190,25 @@ const ProjectDashboard = () => {
       if (project.status === "Completed") {
         setShowCompletedDialog(true);
       } else {
-        // In a real app, we would update the project status in the database
-        toast({
-          title: "Project Completed",
-          description: "Project has been marked as completed."
-        });
+        // Check for incomplete tasks before marking as completed
+        const hasIncompleteTasks = checkForIncompleteTasks();
+        
+        if (hasIncompleteTasks) {
+          setShowIncompleteTasksWarning(true);
+        } else {
+          // Mark as completed directly if no incomplete tasks
+          markProjectAsCompleted();
+        }
       }
     }
+  };
+
+  const markProjectAsCompleted = () => {
+    // In a real app, we would update the project status in the database
+    toast({
+      title: "Project Completed",
+      description: "Project has been marked as completed."
+    });
   };
   const handleGenerateQuote = () => {
     setShowQuoteGenerator(true);
@@ -501,12 +523,8 @@ const ProjectDashboard = () => {
         </Tabs>
         
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-          
-          
           <Card className="flex-1">
-            
             <CardContent>
-              
             </CardContent>
           </Card>
         </div>
@@ -597,6 +615,40 @@ const ProjectDashboard = () => {
         </DialogContent>
       </Dialog>
       
+      {/* Incomplete Tasks Warning Dialog */}
+      <Dialog open={showIncompleteTasksWarning} onOpenChange={setShowIncompleteTasksWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Incomplete Tasks Warning</DialogTitle>
+            <DialogDescription>
+              There are still incomplete tasks in your notes. Are you sure you want to mark this project as complete?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-10 w-10 text-yellow-500" />
+              <div>
+                <p className="font-medium">Some tasks are not yet completed</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Marking the project as complete without finishing all tasks may cause them to be overlooked.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowIncompleteTasksWarning(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              markProjectAsCompleted();
+              setShowIncompleteTasksWarning(false);
+            }}>
+              Yes, mark as complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Quote Generator Dialog */}
       <QuoteGenerator 
         open={showQuoteGenerator}
@@ -606,4 +658,12 @@ const ProjectDashboard = () => {
       />
     </div>;
 };
+
+// Add global type declaration for our global variable
+declare global {
+  interface Window {
+    notesIncompleteTasks: number;
+  }
+}
+
 export default ProjectDashboard;

@@ -1,10 +1,12 @@
 
 import React, { useState } from "react";
-import { X, Plus, Save, MessageSquare } from "lucide-react";
+import { X, Plus, Save, MessageSquare, ListTodo, Square, CheckSquare, GripVertical } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Accordion,
   AccordionContent,
@@ -12,11 +14,18 @@ import {
   AccordionTrigger
 } from "@/components/ui/accordion";
 
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 interface Note {
   id: string;
   content: string;
   createdAt: string;
   updatedAt: string;
+  tasks: Task[];
 }
 
 interface NotesPanelProps {
@@ -33,24 +42,35 @@ export function NotesPanel({ entityId, entityType, entityName }: NotesPanelProps
       id: "1",
       content: "Client requested additional information about electrical specifications.",
       createdAt: "2025-04-25T10:30:00",
-      updatedAt: "2025-04-25T10:30:00"
+      updatedAt: "2025-04-25T10:30:00",
+      tasks: [
+        { id: "task1-1", text: "Send spec sheet to client", completed: true },
+        { id: "task1-2", text: "Follow up on questions", completed: false }
+      ]
     },
     {
       id: "2",
       content: "Need to follow up on material costs - prices may have increased since initial quote.",
       createdAt: "2025-04-26T14:15:00",
-      updatedAt: "2025-04-26T14:15:00"
+      updatedAt: "2025-04-26T14:15:00",
+      tasks: [
+        { id: "task2-1", text: "Contact suppliers for updated pricing", completed: false },
+        { id: "task2-2", text: "Update quote with new figures", completed: false }
+      ]
     },
     {
       id: "3",
       content: "Project meeting scheduled for May 5th to discuss timeline adjustments.",
       createdAt: "2025-04-28T09:45:00",
-      updatedAt: "2025-04-28T09:45:00"
+      updatedAt: "2025-04-28T09:45:00",
+      tasks: []
     }
   ]);
   const [newNote, setNewNote] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [newTask, setNewTask] = useState("");
+  const [addingTaskToNoteId, setAddingTaskToNoteId] = useState<string | null>(null);
 
   const addNote = () => {
     if (newNote.trim() === "") return;
@@ -60,7 +80,8 @@ export function NotesPanel({ entityId, entityType, entityName }: NotesPanelProps
       id: `note-${Date.now()}`,
       content: newNote,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      tasks: []
     };
     
     setNotes([newNoteObj, ...notes]);
@@ -115,6 +136,90 @@ export function NotesPanel({ entityId, entityType, entityName }: NotesPanelProps
       minute: "2-digit"
     });
   };
+
+  const addTask = (noteId: string) => {
+    if (!newTask.trim()) return;
+
+    const updatedNotes = notes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          tasks: [
+            ...note.tasks,
+            {
+              id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              text: newTask.trim(),
+              completed: false
+            }
+          ],
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return note;
+    });
+
+    setNotes(updatedNotes);
+    setNewTask("");
+    setAddingTaskToNoteId(null);
+
+    toast({
+      title: "Task added",
+      description: "Your task has been successfully added to the note.",
+    });
+  };
+
+  const toggleTaskCompletion = (noteId: string, taskId: string, completed: boolean) => {
+    const updatedNotes = notes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          tasks: note.tasks.map(task => 
+            task.id === taskId ? { ...task, completed } : task
+          ),
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return note;
+    });
+
+    setNotes(updatedNotes);
+  };
+
+  const removeTask = (noteId: string, taskId: string) => {
+    const updatedNotes = notes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          tasks: note.tasks.filter(task => task.id !== taskId),
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return note;
+    });
+
+    setNotes(updatedNotes);
+
+    toast({
+      title: "Task removed",
+      description: "Your task has been successfully removed.",
+    });
+  };
+
+  // Function to get all incomplete tasks across all notes
+  const getAllIncompleteTasks = () => {
+    return notes.flatMap(note => 
+      note.tasks.filter(task => !task.completed)
+        .map(task => ({ note, task }))
+    );
+  };
+
+  // Expose incomplete tasks to parent components
+  React.useEffect(() => {
+    // This could be used to communicate with parent components
+    const incompleteTasks = getAllIncompleteTasks();
+    // In a real app, you might use a context or callback prop here
+    window.notesIncompleteTasks = incompleteTasks.length;
+  }, [notes]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -203,7 +308,90 @@ export function NotesPanel({ entityId, entityType, entityName }: NotesPanelProps
                       ) : (
                         <div>
                           <p className="text-sm whitespace-pre-wrap">{note.content}</p>
-                          <div className="flex justify-end gap-2 mt-2">
+                          
+                          {/* Tasks Section */}
+                          {note.tasks.length > 0 && (
+                            <div className="mt-3 border-t pt-3">
+                              <h4 className="text-sm font-medium mb-2 flex items-center">
+                                <ListTodo className="h-4 w-4 mr-1 text-gray-500" />
+                                Tasks
+                              </h4>
+                              <ul className="space-y-2">
+                                {note.tasks.map(task => (
+                                  <li key={task.id} className="flex items-center gap-2">
+                                    <div className="flex items-center flex-1">
+                                      <GripVertical className="h-4 w-4 text-gray-300 mr-1 cursor-move" />
+                                      <Checkbox 
+                                        id={task.id} 
+                                        checked={task.completed}
+                                        onCheckedChange={(checked) => {
+                                          toggleTaskCompletion(note.id, task.id, checked === true);
+                                        }}
+                                      />
+                                      <label 
+                                        htmlFor={task.id}
+                                        className={`ml-2 text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}
+                                      >
+                                        {task.text}
+                                      </label>
+                                    </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-6 w-6 p-0" 
+                                      onClick={() => removeTask(note.id, task.id)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Add Task Form */}
+                          {addingTaskToNoteId === note.id ? (
+                            <div className="mt-3 border-t pt-3">
+                              <div className="flex gap-2">
+                                <Input 
+                                  placeholder="Enter task..."
+                                  value={newTask}
+                                  onChange={(e) => setNewTask(e.target.value)}
+                                  className="text-sm"
+                                />
+                                <Button 
+                                  size="sm"
+                                  onClick={() => addTask(note.id)}
+                                >
+                                  Add
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setAddingTaskToNoteId(null);
+                                    setNewTask("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-3">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs flex items-center"
+                                onClick={() => setAddingTaskToNoteId(note.id)}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Add Task
+                              </Button>
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-end gap-2 mt-4">
                             <Button 
                               variant="outline" 
                               size="sm"
