@@ -9,13 +9,15 @@ interface QuoteGeneratorProps {
   onOpenChange: (open: boolean) => void;
   projectId?: string;
   projectName?: string;
+  subProjects?: any[]; // Add sub-projects prop
 }
 
 export const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({
   open,
   onOpenChange,
   projectId,
-  projectName
+  projectName,
+  subProjects = []
 }) => {
   // Mock BOM items - in a real app, these would be fetched from the project
   const mockBomItems: BomItem[] = [
@@ -61,6 +63,7 @@ export const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({
             bomItems={mockBomItems}
             projectId={projectId}
             projectName={projectName}
+            subProjects={subProjects}
             onBack={() => onOpenChange(false)}
           />
         </div>

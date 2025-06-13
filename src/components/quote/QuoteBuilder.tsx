@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BomItem } from "./bom/BomTypes";
-import { QuoteTemplate } from "./QuoteTemplate";
 import { QuotePDFGenerator } from "./QuotePDFGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
-import { Calculator, FileText, DollarSign, Settings, ArrowLeft } from "lucide-react";
+import { Calculator, FileText, DollarSign, ArrowLeft, Building, Zap } from "lucide-react";
 
 export interface QuoteData {
   quoteNumber: string;
@@ -33,6 +31,7 @@ export interface QuoteData {
   finalPrice: number;
   notes: string;
   terms: string;
+  subProjects?: any[]; // For sub-project details
 }
 
 interface QuoteBuilderProps {
@@ -42,6 +41,7 @@ interface QuoteBuilderProps {
   onBack?: () => void;
   projectId?: string;
   projectName?: string;
+  subProjects?: any[]; // Add sub-projects prop
 }
 
 export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
@@ -50,7 +50,8 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
   onBomItemsChange,
   onBack,
   projectId,
-  projectName
+  projectName,
+  subProjects = []
 }) => {
   const { toast } = useToast();
   
@@ -71,7 +72,8 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
     totalMargin: 0,
     finalPrice: 0,
     notes: "",
-    terms: "Payment terms: Net 30 days\nValidity: 30 days from quote date\nDelivery: 4-6 weeks from order confirmation"
+    terms: "Payment terms: Net 30 days\nValidity: 30 days from quote date\nDelivery: 4-6 weeks from order confirmation",
+    subProjects
   });
 
   // Calculate costs whenever BOM items or margins change
@@ -103,13 +105,6 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
     setQuoteData(prev => ({
       ...prev,
       [field]: value
-    }));
-  };
-
-  const handleTemplateChange = (template: "standard" | "detailed" | "modern") => {
-    setQuoteData(prev => ({
-      ...prev,
-      template
     }));
   };
 
@@ -149,7 +144,7 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
           )}
           <div>
             <h2 className="text-2xl font-bold">Generate Quote</h2>
-            <p className="text-muted-foreground">Create a professional quotation from your BOM</p>
+            <p className="text-muted-foreground">Create a professional quotation from your project</p>
           </div>
         </div>
         <Badge variant="outline" className="text-lg px-3 py-1">
@@ -158,7 +153,7 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Quote Details & Pricing */}
+        {/* Left Column - Quote Details & Sub-Projects */}
         <div className="space-y-6">
           {/* Quote Information */}
           <Card>
@@ -236,18 +231,105 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="validUntil">Valid Until</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={quoteData.validUntil}
-                  onChange={(e) => handleInputChange('validUntil', e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="validUntil">Valid Until</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={quoteData.validUntil}
+                    onChange={(e) => handleInputChange('validUntil', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="template">Quote Template</Label>
+                  <Select value={quoteData.template} onValueChange={(value: "standard" | "detailed" | "modern") => handleInputChange('template', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="detailed">Detailed</SelectItem>
+                      <SelectItem value="modern">Modern</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Sub-Projects Details */}
+          {subProjects && subProjects.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Building className="mr-2 h-5 w-5" />
+                  Sub-Projects Included
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {subProjects.map((subProject) => (
+                  <div key={subProject.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">{subProject.name}</h4>
+                      <Badge variant="outline">{subProject.panelType}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Zap className="h-4 w-4 mr-1" />
+                        <span>{subProject.boardRating}</span>
+                      </div>
+                      <div>
+                        <span>IP Rating: {subProject.ipRating}</span>
+                      </div>
+                      <div>
+                        <span>Quantity: {subProject.quantity}</span>
+                      </div>
+                      <div>
+                        <span>ID: {subProject.id}</span>
+                      </div>
+                    </div>
+                    {subProject.description && (
+                      <p className="text-sm">{subProject.description}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Additional Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional notes or special instructions..."
+                  value={quoteData.notes}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="terms">Terms & Conditions</Label>
+                <Textarea
+                  id="terms"
+                  value={quoteData.terms}
+                  onChange={(e) => handleInputChange('terms', e.target.value)}
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Pricing & BOM Summary */}
+        <div className="space-y-6">
           {/* Pricing & Margins */}
           <Card>
             <CardHeader>
@@ -299,54 +381,6 @@ export const QuoteBuilder: React.FC<QuoteBuilderProps> = ({
                   <span className="text-primary">${quoteData.finalPrice.toLocaleString()}</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Additional notes or special instructions..."
-                  value={quoteData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="terms">Terms & Conditions</Label>
-                <Textarea
-                  id="terms"
-                  value={quoteData.terms}
-                  onChange={(e) => handleInputChange('terms', e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Template & Preview */}
-        <div className="space-y-6">
-          {/* Template Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="mr-2 h-5 w-5" />
-                Quote Template
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QuoteTemplate
-                selectedTemplate={quoteData.template}
-                onTemplateChange={handleTemplateChange}
-              />
             </CardContent>
           </Card>
 
