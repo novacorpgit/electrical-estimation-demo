@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
@@ -9,9 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { BomItem, BomCategory, defaultCategories } from "@/components/quote/bom/BomTypes";
 import { TemplateManager } from "@/components/quote/bom/TemplateManager";
-import { QuoteBuilder } from "@/components/quote/QuoteBuilder";
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, FileText, Download, Filter, ArrowLeft, Layers, Calculator } from "lucide-react";
+import { Plus, Trash2, FileText, Download, Filter, ArrowLeft, Layers } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -342,12 +340,8 @@ const BomManagement = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
             <TabsTrigger value="bom-list">BOM Management</TabsTrigger>
-            <TabsTrigger value="quote-builder">
-              <Calculator className="mr-2 h-4 w-4" />
-              Quote Builder
-            </TabsTrigger>
             <TabsTrigger value="2d-view">2D Panel Layout</TabsTrigger>
           </TabsList>
           
@@ -478,14 +472,6 @@ const BomManagement = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="quote-builder">
-            <QuoteBuilder 
-              bomItems={rowData}
-              subProjectName={subProject?.name}
-              onBomItemsChange={setRowData}
-            />
           </TabsContent>
           
           <TabsContent value="2d-view">
