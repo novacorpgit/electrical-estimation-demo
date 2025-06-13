@@ -2,6 +2,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QuoteBuilder } from "./QuoteBuilder";
+import { BomItem } from "./bom/BomTypes";
 
 interface QuoteGeneratorProps {
   open: boolean;
@@ -17,7 +18,7 @@ export const QuoteGenerator: React.FC<QuoteGeneratorProps> = ({
   projectName
 }) => {
   // Mock BOM items - in a real app, these would be fetched from the project
-  const mockBomItems = [
+  const mockBomItems: BomItem[] = [
     { 
       id: "1", 
       description: "100A Main Switch", 
